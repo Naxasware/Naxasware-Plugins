@@ -8,7 +8,7 @@ claude plugin install <plugin-name>@naxasware-plugins
 ```
 
 [![CI](https://github.com/Naxasware/Naxasware-Plugins/actions/workflows/ci.yml/badge.svg)](https://github.com/Naxasware/Naxasware-Plugins/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 ## Plugins
 
