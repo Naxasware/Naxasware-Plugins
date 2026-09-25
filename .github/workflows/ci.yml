@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  validate-manifests:
+    name: Validate marketplace + plugin manifests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Validate JSON syntax of every manifest
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r -d '' f; do
+            echo "Checking $f"
+            python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" || fail=1
+          done < <(find . -name "plugin.json" -o -name "marketplace.json" -print0)
+          exit $fail
+
+      - name: Run org-wide plugin validator
+        run: python3 scripts/validate_all_plugins.py .
+
+  plugin-smoke-tests:
+    name: Per-plugin smoke tests
+    runs-on: ubuntu-latest
+    needs: validate-manifests
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Discover and run every plugin's ci-smoke.sh
+        run: |
+          set -euo pipefail
+          found=0
+          for smoke in plugins/*/ci-smoke.sh; do
+            [ -e "$smoke" ] || continue
+            found=1
+            echo "::group::Running $smoke"
+            chmod +x "$smoke"
+            bash "$smoke"
+            echo "::endgroup::"
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No ci-smoke.sh files found under plugins/*/ — nothing to run."
+          fi
+
+  claude-plugin-validate:
+    name: claude plugin validate (best-effort)
+    runs-on: ubuntu-latest
+    needs: validate-manifests
+    # This step calls Anthropic's own CLI validator for the authoritative
+    # schema check. It's kept non-blocking (continue-on-error) because it
+    # depends on an external package and CLI behavior this repo doesn't
+    # control — the required, fully-owned check is validate-manifests above.
+    # If this job is consistently green for your Claude Code version, feel
+    # free to remove continue-on-error to make it required too.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate marketplace + every plugin
+        run: claude plugin validate . --strict
+
+  all-checks-passed:
+    name: All required checks passed
+    runs-on: ubuntu-latest
+    needs: [validate-manifests, plugin-smoke-tests]
+    if: always()
+    steps:
+      - name: Fail if any required job failed
+        run: |
+          if [ "${{ needs.validate-manifests.result }}" != "success" ] || \
+             [ "${{ needs.plugin-smoke-tests.result }}" != "success" ]; then
+            echo "One or more required jobs failed."
+            exit 1
+          fi
+          echo "All required jobs passed."
