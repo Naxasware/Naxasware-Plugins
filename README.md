@@ -74,4 +74,6 @@ See [`SECURITY.md`](SECURITY.md).
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE). This covers the repository as a whole; an individual plugin can override this with its own `LICENSE` file in its folder if it needs different terms (see `docs/ADDING-A-PLUGIN.md`).
+Apache License 2.0 — see [`LICENSE`](LICENSE).
+
+This license covers the repository as a whole. An individual plugin may override this with its own `LICENSE` file in its folder if it requires different terms (see [`docs/ADDING-A-PLUGIN.md`](docs/ADDING-A-PLUGIN.md)).
