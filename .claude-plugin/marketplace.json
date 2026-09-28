@@ -11,7 +11,7 @@
       "name": "ai-requirements-analyst",
       "source": "./plugins/ai-requirements-analyst",
       "displayName": "AI Requirements Analyst",
-      "description": "Evidence-based requirements engineering — turns ideas, docs, and connected repos/DBs/APIs into structured, implementation-ready requirements, and verifies documented requirements against what's actually built.",
+      "description": "Evidence-based requirements engineering — turns ideas, docs, and connected repos/DBs/APIs into structured, implementation-ready requirements, and verifies documented requirements.",
       "category": "productivity",
       "tags": [
         "requirements",
