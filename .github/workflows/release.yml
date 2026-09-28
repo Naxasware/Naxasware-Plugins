@@ -1,0 +1,56 @@
+name: Release
+
+# Publish a plugin by pushing a tag named <plugin-name>-v<version>, e.g.
+#   git tag ai-requirements-analyst-v2.1.0 && git push --tags
+# The tag version must equal "version" in that plugin's plugin.json.
+
+on:
+  push:
+    tags:
+      - "*-v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Parse tag and check it matches plugin.json
+        id: tag
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PLUGIN="${TAG%-v*}"
+          VERSION="${TAG##*-v}"
+          PJ="plugins/${PLUGIN}/.claude-plugin/plugin.json"
+          [ -f "$PJ" ] || { echo "::error::No plugin '${PLUGIN}' (expected $PJ)"; exit 1; }
+          ACTUAL="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$PJ")"
+          [ "$ACTUAL" = "$VERSION" ] || { echo "::error::Tag version ${VERSION} != plugin.json version ${ACTUAL}"; exit 1; }
+          echo "plugin=$PLUGIN" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Validate everything
+        run: python3 scripts/validate_all_plugins.py .
+
+      - name: Run the plugin's smoke test (if any)
+        run: |
+          f="plugins/${{ steps.tag.outputs.plugin }}/ci-smoke.sh"
+          [ -f "$f" ] && bash "$f" || echo "No smoke test for this plugin."
+
+      - name: Build artifacts
+        run: |
+          python3 scripts/package_plugin.py "${{ steps.tag.outputs.plugin }}" --out dist --notes-out "$RUNNER_TEMP/notes.md"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --title "${{ steps.tag.outputs.plugin }} ${{ steps.tag.outputs.version }}" \
+            --notes-file "$RUNNER_TEMP/notes.md"

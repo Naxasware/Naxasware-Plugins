@@ -1,37 +1,22 @@
-# Contributing to Naxasware-Plugins
+# Contributing
 
-Thanks for considering a contribution. This repo hosts multiple Claude Code plugins, one per folder under `plugins/`.
+## Changing an existing plugin
 
-## Two kinds of contribution
+1. Edit inside `plugins/<name>/`.
+2. `python3 scripts/validate_all_plugins.py .` and, if the plugin has one, `bash plugins/<name>/ci-smoke.sh`.
+3. If behavior changed: bump `version` in its `plugin.json` and add a `CHANGELOG.md` entry ([`docs/RELEASING.md`](docs/RELEASING.md) has the semver rules).
+4. Open a PR. For a skill or instruction change, include a before/after example of the output; there is no unit-test equivalent for "did the model do the right thing", so examples are the best review evidence.
 
-1. **Changing an existing plugin** — bug fixes, new reference material, better examples. Work inside that plugin's folder; each has its own README and (where applicable) `CONTRIBUTING`-relevant notes in its docs. General process below still applies.
-2. **Adding a new plugin** — see [`docs/ADDING-A-PLUGIN.md`](docs/ADDING-A-PLUGIN.md) for the full checklist (folder structure, manifest, marketplace entry, CI hook).
+## Adding a plugin
 
-## Before you open a PR
+`python3 scripts/new_plugin.py <name> --description "..."`, then follow [`docs/ADDING-A-PLUGIN.md`](docs/ADDING-A-PLUGIN.md). Don't hand-edit `marketplace.json` or the README plugin table; they are generated.
 
-1. **Validate locally.** From the repo root:
-   ```bash
-   python3 scripts/validate_all_plugins.py .
-   ```
-   This is the same check CI runs and requires nothing beyond Python 3.
-2. **Run the affected plugin's smoke test**, if it has one:
-   ```bash
-   ./plugins/<plugin-name>/ci-smoke.sh
-   ```
-3. **Bump versions.** If you changed a plugin's behavior, bump `version` in that plugin's `.claude-plugin/plugin.json` (semantic versioning: patch for fixes, minor for new non-breaking capability, major for a breaking change to output format, schema, or the ID scheme) and add a `CHANGELOG.md` entry in that plugin's folder.
-4. **Keep `SKILL.md` lean.** Claude Code loads a skill's `SKILL.md` in full whenever it triggers, then pulls in `references/*.md` only as needed (progressive disclosure). If you're adding substantial new behavior, prefer extending or adding a reference file over growing `SKILL.md` itself.
+## Commit messages
 
-## Pull request description
+Conventional style helps changelogs: `feat(plugin-name): ...`, `fix(plugin-name): ...`, `docs: ...`, `chore: ...`.
 
-Include:
-- What changed and why.
-- For a behavior change to a skill: a before/after example of its output, if you have one (the most useful kind of review evidence for prompt/instruction changes, since there's no unit-test equivalent for "did the model do the right thing").
-- Confirmation you ran the validator and any relevant `ci-smoke.sh`.
+## Review
 
-## Review and merge
+CI (`CI passed`) must be green. `claude plugin validate` is best-effort and non-blocking. See [`docs/AUTOMATION.md`](docs/AUTOMATION.md) for what each check does.
 
-CI must pass (`validate-manifests` and `plugin-smoke-tests` are required; `claude-plugin-validate` is best-effort and non-blocking — see the root README's CI section for why). A maintainer will review for consistency with the plugin's existing methodology before merging.
-
-## Code of conduct
-
-See [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+By contributing you agree your work is released under the repository's [MIT license](LICENSE). Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).

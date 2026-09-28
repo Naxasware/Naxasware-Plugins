@@ -1,0 +1,46 @@
+name: Sync marketplace and README
+
+# After anything under plugins/ changes on main, regenerate .claude-plugin/marketplace.json
+# and the README plugin table, and commit the result. Adding a skill = adding its folder.
+#
+# NOTE: if you protect `main` so that every change needs a pull request, allow
+# github-actions[bot] to bypass that rule, or this push will be rejected.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/**"
+      - "scripts/sync_repo.py"
+      - "scripts/validate_all_plugins.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Regenerate marketplace.json and README table
+        run: python3 scripts/sync_repo.py
+      - name: Commit if changed
+        run: |
+          if git diff --quiet; then
+            echo "Already in sync."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md .claude-plugin/marketplace.json claude-project/knowledge
+          git commit -m "chore: sync marketplace and README plugin table [skip ci]"
+          git push

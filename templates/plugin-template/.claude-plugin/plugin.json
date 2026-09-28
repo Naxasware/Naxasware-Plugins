@@ -1,0 +1,12 @@
+{
+  "name": "{{PLUGIN_NAME}}",
+  "displayName": "{{DISPLAY_NAME}}",
+  "version": "0.1.0",
+  "description": "{{DESCRIPTION}}",
+  "author": { "name": "Naxasware", "url": "https://github.com/Naxasware" },
+  "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/{{PLUGIN_NAME}}",
+  "repository": "https://github.com/Naxasware/Naxasware-Plugins",
+  "license": "Apache",
+  "keywords": [],
+  "metadata": { "category": "general" }
+}

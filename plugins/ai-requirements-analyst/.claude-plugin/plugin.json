@@ -10,7 +10,7 @@
   },
   "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-requirements-analyst",
   "repository": "https://github.com/Naxasware/Naxasware-Plugins",
-  "license": "MIT",
+  "license": "Apache",
   "keywords": [
     "requirements",
     "business-analysis",
@@ -24,6 +24,7 @@
   "metadata": {
     "vendor": "Naxasware",
     "productName": "AI Requirements Analyst",
-    "productVersion": "2.0.0"
+    "productVersion": "2.0.0",
+    "category": "productivity"
   }
 }

@@ -1,0 +1,14 @@
+name: New skill / plugin request
+description: Suggest a skill or plugin this marketplace should have.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: goal
+    attributes: {label: What should it do, description: "The task it automates and who benefits."}
+    validations: {required: true}
+  - type: textarea
+    id: triggers
+    attributes: {label: When should it trigger, description: "Example prompts a user would type."}
+  - type: textarea
+    id: source
+    attributes: {label: Source material, description: "Link or paste any instruction doc, playbook, or examples."}

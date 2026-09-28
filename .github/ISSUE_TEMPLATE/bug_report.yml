@@ -1,0 +1,18 @@
+name: Bug report
+description: A plugin, skill, script, or workflow isn't behaving as documented.
+labels: [bug]
+body:
+  - type: input
+    id: plugin
+    attributes: {label: Plugin, description: "Folder name under plugins/, or 'repo-wide'."}
+    validations: {required: true}
+  - type: textarea
+    id: what
+    attributes: {label: What happened, description: "Include the prompt you used (for a skill) or the command and output (for a script)."}
+    validations: {required: true}
+  - type: textarea
+    id: expected
+    attributes: {label: What you expected}
+  - type: input
+    id: env
+    attributes: {label: Where you ran it, description: "Claude Code / claude.ai / other agent, and version if known."}
