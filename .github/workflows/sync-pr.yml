@@ -1,0 +1,75 @@
+name: Sync on push / PR
+
+# Regenerates marketplace.json, the README plugin table and normalizes every
+# plugins/*/.claude-plugin/plugin.json, then commits the result back to the
+# SAME branch, so a PR always arrives with its registry entries already done.
+# (sync.yml keeps doing the same job for pushes to main.)
+
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - "plugins/**"
+      - "scripts/sync_repo.py"
+      - "scripts/normalize_plugins.py"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "plugins/**"
+      - "scripts/sync_repo.py"
+      - "scripts/normalize_plugins.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      # Fork PRs get a read-only token: they are checked, never pushed to.
+      IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.head_ref || github.ref_name }}
+          # SYNC_TOKEN (optional PAT / GitHub App token) makes the bot commit
+          # re-trigger CI on the PR. Falls back to GITHUB_TOKEN, whose pushes
+          # deliberately do not start new workflow runs.
+          token: ${{ secrets.SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Normalize plugin.json files
+        if: env.IS_FORK != 'true'
+        run: python3 scripts/normalize_plugins.py
+
+      - name: Regenerate marketplace.json and README table
+        if: env.IS_FORK != 'true'
+        run: python3 scripts/sync_repo.py
+
+      - name: Commit changes back to the branch
+        if: env.IS_FORK != 'true'
+        run: |
+          git add README.md .claude-plugin/marketplace.json plugins/*/.claude-plugin/plugin.json claude-project 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Registry already in sync. Nothing to commit." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: sync marketplace, README table and plugin.json"
+          git push
+          echo "Pushed a sync commit to \`${{ github.head_ref || github.ref_name }}\`." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check only (fork PR, cannot push)
+        if: env.IS_FORK == 'true'
+        run: |
+          python3 scripts/normalize_plugins.py --check
+          python3 scripts/sync_repo.py --check
