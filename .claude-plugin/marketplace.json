@@ -20,6 +20,20 @@
         "srs",
         "spec"
       ]
+    },
+    {
+      "name": "ai-system-architect",
+      "source": "./plugins/ai-system-architect",
+      "displayName": "AI System Architect",
+      "description": "Designs, reviews and modernizes software architecture from business requirements and real technical evidence (repository, docs, database, APIs, infrastructure), with explicit trade-offs, ADRs, risks and diagrams. Read-only by default and useful without any tools.",
+      "category": "development",
+      "tags": [
+        "architecture",
+        "system-design",
+        "adr",
+        "architecture-review",
+        "modernization"
+      ]
     }
   ]
 }

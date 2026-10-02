@@ -10,7 +10,7 @@
   },
   "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-requirements-analyst",
   "repository": "https://github.com/Naxasware/Naxasware-Plugins",
-  "license": "Apache",
+  "license": "Apache-2.0",
   "keywords": [
     "requirements",
     "business-analysis",
