@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "ai-system-architect",
+  "displayName": "AI System Architect",
+  "version": "1.0.0",
+  "description": "Designs, reviews and modernizes software architecture from business requirements and real technical evidence (repository, docs, database, APIs, infrastructure), with explicit trade-offs, ADRs, risks and diagrams. Read-only by default and useful without any tools.",
+  "author": {
+    "name": "Naxasware",
+    "url": "https://github.com/Naxasware"
+  },
+  "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-system-architect",
+  "repository": "https://github.com/Naxasware/Naxasware-Plugins",
+  "license": "Apache-2.0",
+  "keywords": [
+    "architecture",
+    "system-design",
+    "adr",
+    "architecture-review",
+    "modernization",
+    "diagrams",
+    "evidence-based"
+  ],
+  "metadata": {
+    "category": "development"
+  }
+  "author": { "name": "Naxasware", "url": "https://github.com/Naxasware" },
+  "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-system-architect",
+  "repository": "https://github.com/Naxasware/Naxasware-Plugins",
+  "license": "MIT",
+  "keywords": ["architecture", "system-design", "adr", "architecture-review", "modernization", "diagrams", "evidence-based"],
+  "metadata": { "category": "development" }
+}

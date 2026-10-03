@@ -1,0 +1,34 @@
+# Publish by pushing a tag: <plugin-name>-v<X.Y.Z>  (version must match plugin.json)
+name: Release
+on:
+  push:
+    tags: ["*-v[0-9]*.[0-9]*.[0-9]*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Parse tag
+        id: tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          echo "plugin=${tag%-v*}" >> "$GITHUB_OUTPUT"
+          echo "version=${tag##*-v}" >> "$GITHUB_OUTPUT"
+      - name: Validate
+        run: python3 scripts/validate_all_plugins.py .
+      - name: Package
+        run: python3 scripts/package_plugin.py "${{ steps.tag.outputs.plugin }}" --out dist --expect-version "${{ steps.tag.outputs.version }}"
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          flags=""
+          case "$VERSION" in *-*) flags="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" dist/*.zip dist/*.skill dist/*.full.md \
+            --title "$GITHUB_REF_NAME" --notes-file dist/RELEASE_NOTES.md $flags

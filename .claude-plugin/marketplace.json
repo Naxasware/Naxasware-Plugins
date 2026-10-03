@@ -1,0 +1,11 @@
+{
+  "name": "naxasware-plugins",
+  "owner": {
+    "name": "Naxasware",
+    "url": "https://github.com/Naxasware"
+  },
+  "metadata": {
+    "description": "Naxasware's Claude Code plugin marketplace."
+  },
+  "plugins": []
+}

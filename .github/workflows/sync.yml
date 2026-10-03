@@ -1,0 +1,49 @@
+# Keeps generated files in sync with plugins/: README plugin table,
+# .claude-plugin/marketplace.json and each plugin.json (license/author/homepage...).
+# Runs on push to main and on pull requests that touch plugins/.
+# Same-repo PRs get the sync commit pushed to the PR branch. Fork PRs are skipped
+# (read-only token); the push to main after merge syncs them.
+name: Sync
+on:
+  push:
+    branches: [main]
+    paths: ["plugins/**", "scripts/sync_repo.py", ".github/workflows/sync.yml"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths: ["plugins/**", "scripts/sync_repo.py", ".github/workflows/sync.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: sync-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Regenerate
+        run: python3 scripts/sync_repo.py
+      - name: Commit and push changes
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+        run: |
+          git add -A .claude-plugin README.md
+          git add -u plugins
+          if git diff --cached --quiet; then
+            echo "Already in sync."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: sync marketplace.json, README and plugin manifests"
+          git push origin "HEAD:${BRANCH}" || { git pull --rebase origin "${BRANCH}" && git push origin "HEAD:${BRANCH}"; }

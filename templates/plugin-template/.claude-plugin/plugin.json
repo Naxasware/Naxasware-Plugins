@@ -1,0 +1,12 @@
+{
+  "name": "__PLUGIN_NAME__",
+  "displayName": __DISPLAY_NAME_JSON__,
+  "version": "__VERSION__",
+  "description": __DESCRIPTION_JSON__,
+  "author": { "name": "Naxasware", "url": "https://github.com/Naxasware" },
+  "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/__PLUGIN_NAME__",
+  "repository": "https://github.com/Naxasware/Naxasware-Plugins",
+  "license": "Apache-2.0",
+  "keywords": __KEYWORDS_JSON__,
+  "metadata": { "category": __CATEGORY_JSON__ }
+}
