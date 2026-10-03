@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
   "name": "ai-requirements-analyst",
   "displayName": "AI Requirements Analyst",
   "version": "2.0.0",
@@ -10,7 +9,7 @@
   },
   "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-requirements-analyst",
   "repository": "https://github.com/Naxasware/Naxasware-Plugins",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "requirements",
     "business-analysis",
@@ -23,5 +22,6 @@
   ],
   "metadata": {
     "category": "development"
-  }
+  },
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json"
 }

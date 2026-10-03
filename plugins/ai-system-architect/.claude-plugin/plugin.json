@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
   "name": "ai-system-architect",
   "displayName": "AI System Architect",
   "version": "1.0.0",
@@ -22,5 +21,6 @@
   ],
   "metadata": {
     "category": "development"
-  }
+  },
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json"
 }
