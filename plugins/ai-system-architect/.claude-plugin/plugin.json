@@ -23,10 +23,4 @@
   "metadata": {
     "category": "development"
   }
-  "author": { "name": "Naxasware", "url": "https://github.com/Naxasware" },
-  "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-system-architect",
-  "repository": "https://github.com/Naxasware/Naxasware-Plugins",
-  "license": "MIT",
-  "keywords": ["architecture", "system-design", "adr", "architecture-review", "modernization", "diagrams", "evidence-based"],
-  "metadata": { "category": "development" }
 }

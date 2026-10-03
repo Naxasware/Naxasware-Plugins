@@ -1,0 +1,45 @@
+{
+  "project": {
+    "name": "Fleet Management System",
+    "description": "Centralize fleet operations and maintenance tracking."
+  },
+  "business_objectives": [
+    {"id": "BO-001", "name": "Reduce missed vehicle maintenance"}
+  ],
+  "actors": [
+    {"id": "ACT-001", "name": "Fleet Administrator"},
+    {"id": "ACT-002", "name": "Driver"}
+  ],
+  "requirements": [
+    {
+      "id": "FR-001",
+      "name": "Record vehicle mileage",
+      "description": "Driver logs current mileage against a vehicle record.",
+      "actor": "ACT-002",
+      "priority": "Must",
+      "status": "Implemented",
+      "confidence": "High",
+      "evidence": ["src/vehicles/mileage.ts"]
+    },
+    {
+      "id": "FR-002",
+      "name": "Surface maintenance due status",
+      "description": "System flags a vehicle as due for service once its configured interval is reached.",
+      "actor": "ACT-001",
+      "priority": "Must",
+      "status": "Not implemented",
+      "confidence": "Medium",
+      "evidence": ["docs/requirements.md"]
+    }
+  ],
+  "business_rules": [
+    {"id": "BR-001", "description": "Preventive maintenance becomes due after the configured mileage interval or date interval, whichever occurs first."}
+  ],
+  "open_questions": [
+    {"id": "Q-001", "description": "Should the system notify someone when a vehicle becomes due, or is a dashboard sufficient for v1?"}
+  ],
+  "traceability": [
+    {"business_objective": "BO-001", "requirement": "FR-001"},
+    {"business_objective": "BO-001", "requirement": "FR-002"}
+  ]
+}

@@ -22,8 +22,6 @@
     "audit"
   ],
   "metadata": {
-    "vendor": "Naxasware",
-    "productName": "AI Requirements Analyst",
-    "productVersion": "2.0.0"
+    "category": "development"
   }
 }

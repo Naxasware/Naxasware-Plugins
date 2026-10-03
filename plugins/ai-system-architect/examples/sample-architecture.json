@@ -1,0 +1,48 @@
+{
+  "project": {"name": "Example multi-tenant SaaS (fictional)", "schema_version": "1.0", "mode": "architecture_review"},
+  "business_context": {"summary": "Multiple organizations must use the platform independently."},
+  "architecture_drivers": [
+    {"id": "AD-001", "statement": "Multiple organizations must use the platform independently.", "requirement_ids": ["FR-001"]}
+  ],
+  "constraints": [{"id": "CON-001", "statement": "Team of four engineers; PostgreSQL already in production."}],
+  "quality_attributes": [
+    {"id": "QA-001", "name": "Tenant data isolation", "status": "Partially Covered"}
+  ],
+  "architecture_options": [
+    {"id": "OPT-A", "name": "Shared schema with tenant_id", "trade_off": "Lowest cost; isolation depends on consistent enforcement."},
+    {"id": "OPT-B", "name": "Schema per tenant", "trade_off": "Stronger isolation; higher migration and operational effort."}
+  ],
+  "selected_architecture": {"style": "Modular monolith", "rationale": "Small team; no evidence that independent scaling is needed."},
+  "components": [
+    {"id": "COMP-001", "name": "Web App", "origin": "observed", "evidence_ids": ["EV-001"], "responsibility": "User interface"},
+    {"id": "COMP-002", "name": "API Service", "origin": "observed", "evidence_ids": ["EV-001"], "responsibility": "Business logic and HTTP API"},
+    {"id": "COMP-003", "name": "PostgreSQL", "origin": "observed", "evidence_ids": ["EV-002", "EV-003"], "responsibility": "System of record"},
+    {"id": "COMP-004", "name": "Tenant Context Layer", "origin": "recommended", "evidence_ids": [], "classification": "REQUIRED", "responsibility": "Carry tenant identity to every data access"}
+  ],
+  "modules": [],
+  "data_architecture": {"store": "PostgreSQL", "note": "Tenant boundary not visible in the data access layer."},
+  "api_architecture": {},
+  "integration_architecture": {},
+  "security_architecture": {"secrets": "Secret stored in environment-based secret manager."},
+  "infrastructure": {"runtime": "Docker Compose"},
+  "deployment": {},
+  "observability": {"status": "No monitoring configuration was found in the inspected repository."},
+  "ai_architecture": {},
+  "decisions": [
+    {"id": "ADR-001", "title": "Introduce explicit tenant context at the data-access boundary", "classification": "REQUIRED", "driver": "AD-001", "components": ["COMP-004"], "confidence": "Medium"}
+  ],
+  "risks": [
+    {"id": "RISK-001", "risk": "Cross-tenant data exposure if tenant boundaries are not enforced consistently", "evidence": "EV-002", "impact": "High", "likelihood": "Medium", "mitigation": "Tenant context layer plus isolation tests", "contingency": "Disable affected endpoints and audit access logs", "affected_component": "COMP-003"}
+  ],
+  "assumptions": ["Runtime authorization behavior was not verified."],
+  "open_questions": ["Is row-level security acceptable to the team?"],
+  "evidence": [
+    {"id": "EV-001", "types": ["CODE_OBSERVED", "DOCUMENTED"], "sources": ["src/modules/", "README.md"], "confidence": "High", "note": "Modular application structure"},
+    {"id": "EV-002", "types": ["CONFIG_OBSERVED"], "sources": ["database/schema.prisma"], "confidence": "Medium", "note": "No tenant_id on core tables"},
+    {"id": "EV-003", "types": ["CONFIG_OBSERVED"], "sources": ["deployment/docker-compose.yml"], "confidence": "High", "note": "PostgreSQL service defined"},
+    {"id": "EV-004", "types": ["USER_STATED"], "sources": ["user request"], "confidence": "High", "note": "Multi-client support needed"}
+  ],
+  "traceability": [
+    {"requirement": "FR-001", "driver": "AD-001", "decision": "ADR-001", "component": "COMP-004"}
+  ]
+}
