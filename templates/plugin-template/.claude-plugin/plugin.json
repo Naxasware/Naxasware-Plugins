@@ -8,5 +8,9 @@
   "repository": "https://github.com/Naxasware/Naxasware-Plugins",
   "license": "Apache-2.0",
   "keywords": __KEYWORDS_JSON__,
-  "metadata": { "category": __CATEGORY_JSON__ }
+  "metadata": {
+    "vendor": "Naxasware",
+    "productName": __DISPLAY_NAME_JSON__,
+    "productVersion": "__VERSION__"
+  }
 }

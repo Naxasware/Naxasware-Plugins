@@ -21,7 +21,9 @@
     "audit"
   ],
   "metadata": {
-    "category": "development"
+    "vendor": "Naxasware",
+    "productName": "AI Requirements Analyst",
+    "productVersion": "2.0.0"
   },
   "$schema": "https://json.schemastore.org/claude-code-plugin.json"
 }
