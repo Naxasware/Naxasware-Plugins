@@ -1,0 +1,38 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate plugins
+        run: python3 scripts/validate_all_plugins.py .
+      - name: Plugin smoke tests
+        run: |
+          shopt -s nullglob
+          for f in plugins/*/ci-smoke.sh; do
+            echo "::group::$f"; bash "$f"; echo "::endgroup::"
+          done
+      - name: Scaffolder + sync regression test
+        run: |
+          tmp="$(mktemp -d)"
+          mkdir -p "$tmp/plugins" "$tmp/.claude-plugin"
+          cp LICENSE "$tmp/LICENSE"
+          printf '# T\n\n<!-- PLUGINS:START -->\n<!-- PLUGINS:END -->\n' > "$tmp/README.md"
+          python3 scripts/new_plugin.py ci-scaffold-test --root "$tmp" \
+            --description "Scaffold regression fixture used only by CI to prove the template, sync and validator agree."
+          python3 scripts/sync_repo.py --root "$tmp"
+          python3 scripts/sync_repo.py --root "$tmp" --check
+          python3 scripts/validate_all_plugins.py "$tmp"
+          python3 scripts/package_plugin.py ci-scaffold-test --root "$tmp" --out "$tmp/dist"

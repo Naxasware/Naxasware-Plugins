@@ -1,0 +1,59 @@
+{
+  "name": "naxasware-plugins",
+  "owner": {
+    "name": "Naxasware",
+    "url": "https://github.com/Naxasware"
+  },
+  "metadata": {
+    "description": "Naxasware's Claude Code plugin marketplace."
+  },
+  "plugins": [
+    {
+      "name": "ai-requirements-analyst",
+      "source": "./plugins/ai-requirements-analyst",
+      "description": "Evidence-based requirements engineering — turns ideas, docs, and connected repos/DBs/APIs into structured, implementation-ready requirements, and verifies documented requirements against what's actually built.",
+      "version": "2.0.0",
+      "author": {
+        "name": "Naxasware",
+        "url": "https://github.com/Naxasware"
+      },
+      "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-requirements-analyst",
+      "repository": "https://github.com/Naxasware/Naxasware-Plugins",
+      "license": "Apache-2.0",
+      "keywords": [
+        "requirements",
+        "business-analysis",
+        "product-management",
+        "srs",
+        "spec",
+        "requirements-engineering",
+        "evidence-based",
+        "audit"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "ai-system-architect",
+      "source": "./plugins/ai-system-architect",
+      "description": "Designs, reviews and modernizes software architecture from business requirements and real technical evidence (repository, docs, database, APIs, infrastructure), with explicit trade-offs, ADRs, risks and diagrams. Read-only by default and useful without any tools.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Naxasware",
+        "url": "https://github.com/Naxasware"
+      },
+      "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-system-architect",
+      "repository": "https://github.com/Naxasware/Naxasware-Plugins",
+      "license": "Apache-2.0",
+      "keywords": [
+        "architecture",
+        "system-design",
+        "adr",
+        "architecture-review",
+        "modernization",
+        "diagrams",
+        "evidence-based"
+      ],
+      "category": "development"
+    }
+  ]
+}
