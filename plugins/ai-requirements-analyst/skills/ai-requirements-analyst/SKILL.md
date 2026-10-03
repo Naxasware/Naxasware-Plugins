@@ -1,5 +1,5 @@
 ---
-name: ai-requirements-analyst-v2
+name: ai-requirements-analyst
 description: Evidence-based requirements engineering — turns a business idea, requirements doc, codebase, or connected project/repo/database/API into structured, implementation-ready requirements, and can verify documented requirements against what's actually built. Use whenever someone wants to plan, spec, or scope software; wants a requirements doc or PRD audited for gaps/ambiguity/contradictions; wants to know what a repo or connected system actually does versus what's documented; wants change-impact analysis; or wants a diff between two requirement sets. Trigger even without the word "requirements" — "what does our system actually support," "turn this idea into a spec," "does our code match our docs," "what breaks if customers can cancel after payment," "reconstruct requirements for this legacy repo." Works as a pure requirements-analysis skill from conversation alone if no file/repo/system is available. Not for just writing code, or non-software domains.
 ---
 

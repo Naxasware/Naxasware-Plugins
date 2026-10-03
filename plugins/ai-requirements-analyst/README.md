@@ -5,7 +5,7 @@
 > V1 understands what you tell it. V2 can go check.
 
 [![Version](https://img.shields.io/badge/version-2.0.0-blue)](CHANGELOG.md)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](../../LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-green)](../../LICENSE)
 
 Part of the [Naxasware-Plugins](../../README.md) marketplace.
 

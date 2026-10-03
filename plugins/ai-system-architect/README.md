@@ -5,7 +5,7 @@
 > V1 designs architecture from requirements. V2 can inspect the actual system and design architecture based on evidence.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](../../LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-green)](../../LICENSE)
 
 Part of the [Naxasware-Plugins](../../README.md) marketplace.
 
