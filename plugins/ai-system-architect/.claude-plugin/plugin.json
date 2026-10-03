@@ -22,7 +22,8 @@
   "metadata": {
     "vendor": "Naxasware",
     "productName": "AI System Architect",
-    "productVersion": "1.0.0"
+    "productVersion": "1.0.0",
+    "category": "general"
   },
   "$schema": "https://json.schemastore.org/claude-code-plugin.json"
 }

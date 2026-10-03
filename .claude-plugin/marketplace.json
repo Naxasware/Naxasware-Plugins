@@ -30,7 +30,7 @@
         "evidence-based",
         "audit"
       ],
-      "category": "development"
+      "category": "general"
     },
     {
       "name": "ai-system-architect",
@@ -53,7 +53,7 @@
         "diagrams",
         "evidence-based"
       ],
-      "category": "development"
+      "category": "general"
     }
   ]
 }

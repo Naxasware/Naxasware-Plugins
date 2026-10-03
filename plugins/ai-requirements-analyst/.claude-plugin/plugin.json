@@ -23,7 +23,8 @@
   "metadata": {
     "vendor": "Naxasware",
     "productName": "AI Requirements Analyst",
-    "productVersion": "2.0.0"
+    "productVersion": "2.0.0",
+    "category": "general"
   },
   "$schema": "https://json.schemastore.org/claude-code-plugin.json"
 }
