@@ -7,6 +7,8 @@ Writes (or, with --check, only compares):
   1. plugins/<name>/.claude-plugin/plugin.json  normalized: name == folder, license
      forced to the repo license, author/homepage/repository/displayName filled
      in when missing, keys in canonical order. Your own values are kept.
+     Keys Claude's plugin validator does not recognize ($schema, metadata) are removed.
+     The marketplace category is not stored in plugin.json: set it in CATEGORIES below.
   2. .claude-plugin/marketplace.json            rebuilt from all plugins.
   3. README.md                                  plugin table between
                                                 <!-- PLUGINS:START --> and <!-- PLUGINS:END -->.
@@ -28,7 +30,10 @@ OWNER = {"name": "Naxasware", "url": "https://github.com/Naxasware"}
 LICENSE_ID = "Apache-2.0"
 START, END = "<!-- PLUGINS:START -->", "<!-- PLUGINS:END -->"
 KEY_ORDER = ["name", "displayName", "version", "description", "author", "homepage",
-             "repository", "license", "keywords", "metadata"]
+             "repository", "license", "keywords"]
+UNRECOGNIZED_KEYS = ("$schema", "metadata")
+# marketplace.json category per plugin folder (marketplace entry only; default "general")
+CATEGORIES = {}
 
 
 def title(name):
@@ -48,9 +53,8 @@ def normalize(pj, folder):
     pj.setdefault("homepage", f"{REPO_URL}/tree/main/plugins/{folder}")
     pj.setdefault("repository", REPO_URL)
     pj["license"] = LICENSE_ID
-    meta = pj.get("metadata") if isinstance(pj.get("metadata"), dict) else {}
-    meta.setdefault("category", "general")
-    pj["metadata"] = meta
+    for k in UNRECOGNIZED_KEYS:
+        pj.pop(k, None)
     ordered = {k: pj[k] for k in KEY_ORDER if k in pj}
     ordered.update({k: v for k, v in pj.items() if k not in ordered})
     return ordered
@@ -61,7 +65,7 @@ def entry(pj, folder):
     for k in ("description", "version", "author", "homepage", "repository", "license", "keywords"):
         if k in pj:
             e[k] = pj[k]
-    e["category"] = pj["metadata"]["category"]
+    e["category"] = CATEGORIES.get(folder, "general")
     return e
 
 

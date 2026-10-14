@@ -160,7 +160,7 @@ BO-001 Reduce manual maintenance tracking
       → AC-007-1 System marks service due when mileage threshold is reached
 ```
 
-Don't force a full matrix onto a five-requirement Quick Analysis — traceability earns its keep on larger specs.
+Don't force a full matrix onto a five-requirement Quick Analysis — traceability earns its keep on larger specs. Put the chain under a heading that contains "Traceability" (or in a table): `scripts/validate_ids.py` treats such sections as references, so an arrow line that starts with an ID is not counted as a second definition of that ID.
 
 ### Code-to-requirement traceability (V2, when a repository is connected)
 

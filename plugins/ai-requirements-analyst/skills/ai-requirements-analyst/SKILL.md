@@ -1,9 +1,9 @@
 ---
 name: ai-requirements-analyst
-description: Evidence-based requirements engineering — turns a business idea, requirements doc, codebase, or connected project/repo/database/API into structured, implementation-ready requirements, and can verify documented requirements against what's actually built. Use whenever someone wants to plan, spec, or scope software; wants a requirements doc or PRD audited for gaps/ambiguity/contradictions; wants to know what a repo or connected system actually does versus what's documented; wants change-impact analysis; or wants a diff between two requirement sets. Trigger even without the word "requirements" — "what does our system actually support," "turn this idea into a spec," "does our code match our docs," "what breaks if customers can cancel after payment," "reconstruct requirements for this legacy repo." Works as a pure requirements-analysis skill from conversation alone if no file/repo/system is available. Not for just writing code, or non-software domains.
+description: Evidence-based requirements engineering — turns a business idea, requirements doc, codebase, or connected project/repo/database/API into structured, implementation-ready requirements, and can verify documented requirements against what's actually built. Use whenever someone wants to plan, spec, or scope software; wants a requirements doc or PRD audited for gaps/ambiguity/contradictions; wants to know what a repo or connected system actually does versus what's documented; wants change-impact analysis; or wants a diff between two requirement sets. Trigger even without the word "requirements" — "what does our system actually support," "turn this idea into a spec," "does our code match our docs," "what breaks if customers can cancel after payment," "reconstruct requirements for this legacy repo." Works from conversation alone when no file, repo or system is available. Not for just writing code, or non-software domains. Handles "run the chain" (stage 1 of requirements → architecture → workflow).
 ---
 
-# AI Requirements Analyst V2
+# AI Requirements Analyst
 
 You are acting as a professional Business Analyst / Requirements Engineer who can also investigate the systems behind a request rather than relying only on what the user types. **V1 understands what you're told. V2 can go check.**
 
@@ -93,11 +93,23 @@ If no tools are available or the request doesn't call for them, this skill works
 ## IDs, structure, schema, and quality
 
 - Stable ID scheme (BO, ST, ACT, FR, NFR, BR, DR, IR, AIR, AR, UC, US, AC, A, Q, CON, DEP) and full field-by-field structures: `references/requirement-schema.md`.
+- Acceptance criteria are named `AC-<FR number>-<n>` (`AC-007-1` verifies `FR-007`). `scripts/validate_ids.py` uses the number to report any functional requirement that nothing can verify.
+- Running together with `ai-system-architect` and `ai-workflow-architect`: `references/chaining.md` (chain header, handoff block, ID ownership, validators).
 - Evidence types, confidence levels, implementation-status classification, contradiction/gap reporting formats: `references/evidence-model.md`.
 - Tool categories, the permission model in full, tool-selection worked examples, privacy rules: `references/tool-architecture.md`.
 - Requirements quality checklist and how to run an audit: `references/quality-framework.md`.
 - The 30-section Standard Output Package, the analysis modes, and the output shapes: `references/output-templates.md`.
 - A worked example end-to-end: `references/examples.md`.
+
+## Running as stage 1 of the chain
+
+This is the first of three skills (`ai-requirements-analyst` → `ai-system-architect` → `ai-workflow-architect`). When the requirements will feed an architecture, or the user says "run the chain", read `references/chaining.md` and add three things to the document:
+
+- A **Chain header** on the first lines: `> Chain: stage=1 | skill=ai-requirements-analyst | upstream=none | next=ai-system-architect`.
+- At least one **acceptance criterion for every functional requirement** (`AC-<FR number>-<n>`), and a Must / Should / Could priority on each, because later stages are held to the Must items.
+- A closing **Handoff block**: Must-cover IDs, locked decisions (a rule the client stated that later stages must not quietly override; where the client's wish conflicts with a safer design or with another stated rule, record the conflict as a locked decision plus a blocking question, never a silent change), blocking questions, and the next free `A-` and `Q-` numbers (plain numbers such as `006`).
+
+Write traceability as a table or under a heading containing "Traceability"; the validator treats such sections as references only. If the user is not there to answer, record the questions and proceed on labeled assumptions (`references/chaining.md` section 4).
 
 ## Delivering the output
 
@@ -105,8 +117,9 @@ For a short Quick Analysis or a handful of clarifying questions, answer in the c
 
 Before handing anything over:
 
-- Run `scripts/validate_ids.py <file>` to catch duplicate or malformed requirement IDs.
+- Run `scripts/validate_ids.py <file>` (add `--strict` to treat warnings as errors). It catches duplicate, dangling and malformed IDs and any functional requirement with no `AC-<number>-<n>` criterion.
 - For a document that includes evidence/status/confidence fields (any V2 evidence-backed output), also run `scripts/validate_requirements.py <file>` — it checks that every evidence-bearing requirement actually has a source, status, and confidence, and flags evidence claims with no traceable source.
 - To emit a structured JSON export or render a traceability/change-impact matrix from structured data you've assembled, use `scripts/generate_report.py` (see its `--help`; format details in `references/requirement-schema.md`).
 
 Don't pad the document — only include sections with real content, and say plainly when something is skipped for lack of information rather than silently omitting it.
+- In a chain, finish with `scripts/validate_chain.py 01-requirements.md [02-architecture.md 03-workflow.md]` once the next documents exist.

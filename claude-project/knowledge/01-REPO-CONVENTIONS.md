@@ -44,11 +44,10 @@ Naxasware-Plugins/
   "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/<plugin-name>",
   "repository": "https://github.com/Naxasware/Naxasware-Plugins",
   "license": "Apache-2.0",
-  "keywords": ["3-8 lowercase tags"],
-  "metadata": { "category": "productivity" }
+  "keywords": ["3-8 lowercase tags"]
 }
 ```
-`sync_repo.py` forces `name` = folder name and `license` = Apache-2.0 and fills missing author/homepage/repository/displayName, so these never need manual fixing in the repo (still write them correctly). `metadata.category` is a free string (productivity, development, security, data, writing, research, general…). Do not add a `skills` key: `skills/` is scanned by default. Do not create `.claude-plugin/marketplace.json` inside a plugin.
+`sync_repo.py` forces `name` = folder name and `license` = Apache-2.0 and fills missing author/homepage/repository/displayName and removes `$schema`/`metadata`, so these never need manual fixing in the repo (still write them correctly). Do not add `$schema` or `metadata` (Claude's plugin validator rejects both; `sync_repo.py` removes them). The marketplace category is not stored in plugin.json: it comes from `CATEGORIES` in `scripts/sync_repo.py` (default `general`). Do not add a `skills` key: `skills/` is scanned by default. Do not create `.claude-plugin/marketplace.json` inside a plugin.
 
 ## Versioning and changelog
 - Semver `X.Y.Z`. Patch = fixes/wording. Minor = new backward-compatible capability. Major = changed output format, schema, or ID scheme.
@@ -82,3 +81,6 @@ Expect a "not listed in marketplace.json" warning (that's normal here) and `No e
 - Edit `marketplace.json`, the README plugin table, or files outside `plugins/<name>/`.
 - Add a per-plugin LICENSE (Apache-2.0 is inherited) unless asked. Never write "MIT" anywhere (the validator warns on it).
 - Commit secrets, credentials, personal data, or generated artifacts (`dist/`, `*.pyc`, `*.skill`).
+
+## Chain plugins
+`ai-requirements-analyst` (stage 1), `ai-system-architect` (stage 2) and `ai-workflow-architect` (stage 3) share `references/chaining.md`, `scripts/idscan.py` and `scripts/validate_chain.py`, which must stay byte-identical in all three (each plugin's `ci-smoke.sh` checks this). Change the master copy, then copy it to the other two. Each ships `examples/chain-example/`, validated strictly in CI.

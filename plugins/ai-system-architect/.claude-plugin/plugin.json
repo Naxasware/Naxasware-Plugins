@@ -1,7 +1,7 @@
 {
   "name": "ai-system-architect",
   "displayName": "AI System Architect",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Designs, reviews and modernizes software architecture from business requirements and real technical evidence (repository, docs, database, APIs, infrastructure), with explicit trade-offs, ADRs, risks and diagrams. Read-only by default and useful without any tools.",
   "author": {
     "name": "Naxasware",
@@ -18,12 +18,5 @@
     "modernization",
     "diagrams",
     "evidence-based"
-  ],
-  "metadata": {
-    "vendor": "Naxasware",
-    "productName": "AI System Architect",
-    "productVersion": "1.0.0",
-    "category": "general"
-  },
-  "$schema": "https://json.schemastore.org/claude-code-plugin.json"
+  ]
 }

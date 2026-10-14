@@ -37,6 +37,7 @@ import sys
 from pathlib import Path
 
 EXPECTED_LICENSE = "Apache-2.0"
+UNRECOGNIZED_KEYS = ("$schema", "metadata")
 MAX_DESC = 1024
 MIN_DESC = 20
 MAX_SKILL_LINES = 500
@@ -201,6 +202,9 @@ def check_plugin(plugin_dir, root, rep, expected_name=None):
         for f in ("author", "license"):
             if f not in pj:
                 rep.warn(f"{rel}/.claude-plugin/plugin.json: missing recommended '{f}'")
+        for k in UNRECOGNIZED_KEYS:
+            if k in pj:
+                rep.warn(f"{rel}/.claude-plugin/plugin.json: unrecognized key '{k}' (Claude's plugin validator rejects it; scripts/sync_repo.py removes it)")
         if pj.get("license") and pj["license"] != EXPECTED_LICENSE:
             rep.warn(f"{rel}/.claude-plugin/plugin.json: license '{pj['license']}' should be {EXPECTED_LICENSE}")
     if not (plugin_dir / "README.md").exists():

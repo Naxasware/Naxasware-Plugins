@@ -20,6 +20,15 @@ Other agents: use the `ai-workflow-architect.full.md` file attached to each rele
 - **Safety:** read-only by default, secrets always masked, tool failures reported as limits rather than papered over.
 - Stage 3 of the `ai-requirements-analyst` → `ai-system-architect` → `ai-workflow-architect` chain.
 
+## Running the chain
+
+This plugin is stage 3 of `ai-requirements-analyst` → `ai-system-architect` → `ai-workflow-architect`. Give it `01-requirements.md` and `02-architecture.md` and ask for "run the chain": every upstream item is cited and covered (or deferred with a reason), locked decisions are kept, and steps that wait for a person or an outside reply get a wait limit and an expiry path. `examples/chain-example/` holds a complete, validated example of all three documents.
+
+```bash
+python3 skills/ai-workflow-architect/scripts/validate_workflow.py 03-workflow.md --strict
+python3 skills/ai-workflow-architect/scripts/validate_chain.py 01-requirements.md 02-architecture.md 03-workflow.md --strict
+```
+
 ## Example prompts
 - "Design the workflow for qualifying inbound leads, with a human approval step for large deals."
 - "Should this be an agent or a single LLM call?"
@@ -38,9 +47,13 @@ ai-workflow-architect/
 │   ├── references/       methodology, reliability, security, AI/agents, MCP, evidence model,
 │   │                     discovery, drift, inspection safety, report structures
 │   ├── examples/         worked architectures and an existing-system drift review (invented)
-│   └── scripts/          optional stdlib-only validators and report generator
+│   └── scripts/          optional stdlib-only validators, chain checks and report generator
+├── examples/chain-example/   one project through all three stages (01, 02, 03), validated in CI
+├── docs/                     install and non-Claude usage guides
+├── tools/                    skill packager and context bundler
 ├── ci-smoke.sh
 ├── README.md
+├── SECURITY.md
 └── CHANGELOG.md
 ```
 

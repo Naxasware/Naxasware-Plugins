@@ -2,6 +2,17 @@
 
 All notable changes to this plugin are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [Semantic Versioning](https://semver.org/).
 
+## [2.1.0] — 2026-10-12
+
+### Added
+- Chain support as stage 1 of requirements → architecture → workflow: `references/chaining.md`, `scripts/idscan.py`, `scripts/validate_chain.py` (shared, byte-identical in all three plugins), a "Running as stage 1 of the chain" section in SKILL.md, and `examples/chain-example/` (client brief and a chain-ready requirements document).
+- `validate_ids.py` now checks that every functional requirement has an acceptance criterion named `AC-<FR number>-<n>` (warning; error with `--strict`) and that every AC matches an FR.
+
+### Fixed
+- `validate_ids.py` reported false duplicate definitions for arrow-style traceability lines (the format `requirement-schema.md` recommends). Sections under "Traceability", "Coverage", "Carried forward" or "Upstream" now count as references only.
+- `validate_requirements.py --help` printed a traceback; it now prints usage.
+- Removed the unrecognized `$schema` and `metadata` keys from `plugin.json`.
+
 ## [2.0.0] — 2026-09-25
 
 ### Added

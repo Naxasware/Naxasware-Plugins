@@ -1,0 +1,15 @@
+flowchart LR
+  MB[Shared Mailbox] --> MC[Mailbox Connector]
+  MC --> DS[Document Store]
+  MC --> REG[Invoice Registry]
+  REG --> EXT[Extraction Service]
+  EXT --> MAT[Matching Service]
+  MAT --> APP[Approval Service]
+  APP --> NOT[Notification Sender]
+  UI[Review UI] <--> APP
+  UI <--> REG
+  APP --> GW[ERP Gateway]
+  GW --> ERP[ERP System]
+  REG --> DB[(Invoice Database)]
+  APP --> AUD[Audit Log]
+  GW --> AUD

@@ -4,6 +4,7 @@
 Usage: python3 scripts/new_plugin.py <name> --description "What it does and for whom."
          [--skill NAME] [--display "Human Name"] [--category productivity]
          [--keywords a,b,c] [--version 0.1.0] [--root DIR]
+(--category only seeds the default keywords; the marketplace category is set in CATEGORIES in scripts/sync_repo.py)
 The new skill description ends with a TODO so the validator nags until you write
 real trigger phrasings. Exit codes: 0 ok, 1 bad input or folder exists.
 """

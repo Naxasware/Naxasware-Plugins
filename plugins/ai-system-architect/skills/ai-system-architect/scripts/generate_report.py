@@ -2,6 +2,10 @@
 """Render a System Architect structured-output JSON file as a Markdown report.
 
 Usage: generate_report.py architecture.json [-o report.md]
+Chain mode (project.chain present): writes the `> Chain:` header as the first line and renders
+`carried_forward`, `upstream_coverage` and `handoff` in the form validate_chain.py reads.
+ID-like keys (INT-001) keep their case; sections the report does not know are rendered under their
+own heading instead of being dropped.
 Writes to stdout unless -o is given. Credential-like strings are replaced with
 [MASKED] so secrets never reach the generated document.
 Exit codes: 0 = ok, 2 = usage or I/O problem.
@@ -27,8 +31,13 @@ SECTIONS = [
     ("security_architecture", "Security Architecture"), ("infrastructure", "Infrastructure"),
     ("deployment", "Deployment"), ("observability", "Observability"), ("ai_architecture", "AI Architecture"),
     ("decisions", "Decisions"), ("risks", "Risk Register"), ("assumptions", "Assumptions"),
-    ("open_questions", "Open Questions"), ("evidence", "Evidence"), ("traceability", "Traceability"),
+    ("open_questions", "Open Questions"), ("evidence", "Evidence"),
+    ("carried_forward", "Carried forward from upstream"), ("upstream_coverage", "Upstream Coverage"),
+    ("traceability", "Traceability"),
 ]
+HANDOFF_ORDER = [("next_skill", "Next skill"), ("must_cover", "Must cover"), ("locked_decisions", "Locked decisions"),
+                 ("blocking_questions", "Blocking questions"), ("next_a", "Next A"), ("next_q", "Next Q")]
+ID_KEY = re.compile(r"^[A-Z]{1,5}-\d+(?:-\d+)?$")
 
 
 def mask(s):
@@ -52,7 +61,10 @@ def cell(v):
 
 
 def label(k):
-    return str(k).replace("_", " ").strip().capitalize()
+    k = str(k)
+    if ID_KEY.match(k):
+        return k
+    return k.replace("_", " ").strip().capitalize()
 
 
 def flat_row(d):
@@ -102,13 +114,33 @@ def main():
         print(f"Cannot read {a.input}: {e}", file=sys.stderr)
         sys.exit(2)
     proj = data.get("project", {}) if isinstance(data, dict) else {}
-    out = [f"# Architecture: {cell(proj.get('name', 'Untitled'))}", ""]
-    render({k: v for k, v in proj.items() if k != "name"}, 2, out)
+    chain = proj.get("chain") if isinstance(proj, dict) else None
+    out = []
+    if isinstance(chain, dict):
+        up = chain.get("upstream", "none")
+        up = ", ".join(up) if isinstance(up, list) else up
+        out += [f"> Chain: stage={chain.get('stage', 2)} | skill={chain.get('skill', 'ai-system-architect')} | "
+                f"upstream={up} | next={chain.get('next', 'ai-workflow-architect')}", ""]
+    out += [f"# Architecture: {cell(proj.get('name', 'Untitled'))}", ""]
+    render({k: v for k, v in proj.items() if k not in ("name", "chain")}, 2, out)
+    known = {k for k, _ in SECTIONS} | {"project", "handoff"}
     for key, title in SECTIONS:
         val = data.get(key)
         if val:
             out += ["", f"## {title}", ""]
             render(val, 3, out)
+    for key, val in data.items():
+        if key not in known and val:
+            out += ["", f"## {label(key)}", ""]
+            render(val, 3, out)
+    ho = data.get("handoff")
+    if isinstance(ho, dict) and ho:
+        out += ["", "## Handoff to next stage"]
+        for k, title in HANDOFF_ORDER:
+            if k in ho:
+                v = ho[k]
+                v = ", ".join(str(i) for i in v) if isinstance(v, list) else v
+                out.append(f"- {title}: {cell(v)}")
     text = "\n".join(out).rstrip() + "\n"
     if a.output:
         with open(a.output, "w", encoding="utf-8") as f:

@@ -26,6 +26,42 @@ python3 "$SCRIPTS/generate_report.py" "$EXAMPLES/sample-requirements.json" --for
 python3 "$SCRIPTS/generate_report.py" "$EXAMPLES/sample-requirements.json" --format matrix > /dev/null
 
 echo
+echo
+echo "== chain example: stage 1 document =="
+python3 "$SCRIPTS/validate_ids.py" "$EXAMPLES/chain-example/01-requirements.md" --strict
+python3 "$SCRIPTS/validate_requirements.py" "$EXAMPLES/chain-example/01-requirements.md"
+
+echo
+echo "== regression: arrow-style traceability must not report duplicates =="
+TMP_DOC="$(mktemp -d)/arrow.md"
+printf '> Chain: stage=1 | skill=ai-requirements-analyst | upstream=none | next=ai-system-architect\n\n## Business Objectives\nBO-001: Reduce manual work.\n\n## Functional Requirements\nFR-001 - Do the thing\nAC-001-1: Given a, when b, then c.\n\n## Traceability\nBO-001 -> FR-001 -> AC-001-1\n' > "$TMP_DOC"
+python3 "$SCRIPTS/validate_ids.py" "$TMP_DOC" --strict >/dev/null
+rm -f "$TMP_DOC"
+
+echo
+echo "== regression: a functional requirement without a criterion must be reported =="
+NOAC="$(mktemp -d)/noac.md"
+printf '> Chain: stage=1 | skill=ai-requirements-analyst | upstream=none | next=ai-system-architect\n\nBO-001: Reduce manual work.\n\nFR-001 - Do the thing\n' > "$NOAC"
+if python3 "$SCRIPTS/validate_ids.py" "$NOAC" --strict >/dev/null; then echo "FAIL: missing acceptance criterion not detected"; exit 1; fi
+rm -f "$NOAC"
+
+echo
+echo "== chain scripts identical across plugins (drift check) =="
+python3 - "$SCRIPTS" "$HERE" <<'PY'
+import hashlib, sys
+from pathlib import Path
+mine_dir, here = Path(sys.argv[1]), Path(sys.argv[2])
+bad = []
+for name in ("idscan.py", "validate_chain.py"):
+    mine = hashlib.sha256((mine_dir / name).read_bytes()).hexdigest()
+    for sib in sorted(here.parent.glob(f"ai-*/skills/ai-*/scripts/{name}")):
+        if hashlib.sha256(sib.read_bytes()).hexdigest() != mine:
+            bad.append(f"{name} differs from {sib}")
+if bad:
+    print("FAIL: " + "; ".join(bad)); sys.exit(1)
+print("chain scripts identical")
+PY
+
 echo "== package_skill.py dry run (packages to a temp dir) =="
 TMP_OUT="$(mktemp -d)"
 python3 "$HERE/tools/package_skill.py" "$HERE/skills/ai-requirements-analyst" "$TMP_OUT"

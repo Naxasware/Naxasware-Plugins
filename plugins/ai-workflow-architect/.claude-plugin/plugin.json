@@ -1,7 +1,7 @@
 {
   "name": "ai-workflow-architect",
   "displayName": "AI Workflow Architect",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Designs, reviews, debugs and optimizes AI and automation workflows, and inspects existing ones read-only (exports, repositories, APIs, databases, logs) with evidence tracking and drift detection. Useful with or without tools.",
   "author": {
     "name": "Naxasware",
@@ -19,8 +19,5 @@
     "evidence-based",
     "mcp",
     "review"
-  ],
-  "metadata": {
-    "category": "general"
-  }
+  ]
 }

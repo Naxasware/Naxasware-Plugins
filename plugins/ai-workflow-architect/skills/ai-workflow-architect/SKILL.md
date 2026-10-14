@@ -162,14 +162,14 @@ Short answers and Quick designs go in the conversation. A Standard or Full archi
 Before handing over, validate if Python 3 is available (standard library only):
 
 ```bash
-python3 scripts/validate_workflow.py architecture.md            # depth read from the document's "Depth:" line
+python3 scripts/validate_workflow.py architecture.md --strict   # depth read from the document's "Depth:" line; --strict makes warnings (missing timeout or retry, unlabeled figures) fail
 python3 scripts/validate_ids.py architecture.md
 python3 scripts/validate_diagrams.py architecture.md
 python3 scripts/generate_report.py architecture.md -o report.md
 python3 scripts/validate_evidence.py review.md                 # evidence tables, DRIFT records, masked secrets (existing-system reports)
 # inside the chain, add the upstream documents:
-python3 scripts/validate_workflow.py 03-workflow.md --upstream 01-requirements.md 02-architecture.md
-python3 scripts/validate_chain.py 01-requirements.md 02-architecture.md 03-workflow.md
+python3 scripts/validate_workflow.py 03-workflow.md --upstream 01-requirements.md 02-architecture.md --strict
+python3 scripts/validate_chain.py 01-requirements.md 02-architecture.md 03-workflow.md --strict
 ```
 
 `validate_workflow.py` checks required sections for the chosen depth, step tables (core columns, failure / retry / timeout, timeout paths for human and waiting steps), traceability, unlabeled money / percentage / volume figures anywhere in the document, leaked secrets and agent-spec completeness. `validate_ids.py` catches duplicate, dangling and malformed IDs; with `--upstream` it also verifies cited upstream IDs and rejects restating them. `validate_diagrams.py` checks Mermaid syntax and that diagram IDs exist in the document. `validate_chain.py` checks the hand-off across the documents. `validate_evidence.py` checks evidence tables (valid types and confidence levels), that each `DRIFT-###` record has all seven fields, that no recommendation class is invented, and that no secret value is printed. `generate_report.py` summarizes ID counts, traceability, assumptions, open questions, risks and validation status. Fix errors before delivery; explain any warning you leave.
@@ -201,3 +201,5 @@ python3 scripts/validate_chain.py 01-requirements.md 02-architecture.md 03-workf
 | `references/chaining.md` | Running with the requirements and architecture skills: header, handoff, ID ownership, coverage, validators |
 
 Worked examples in `examples/`: `simple-automation.md` (Quick), `ai-workflow.md`, `ai-agent.md`, `rag-workflow.md`, `human-in-loop.md`, `business-process.md` (Standard/Full), and `drift-review.md` (existing-system evidence report with drift). All use invented scenarios for illustration only.
+
+A complete worked chain (all three documents, passing every check above) is in the plugin's `examples/chain-example/`.

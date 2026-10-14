@@ -1,6 +1,6 @@
 ---
 name: ai-system-architect
-description: Design, review, or evolve software system architecture from business requirements and real technical evidence (repository, docs, database schema, API specs, infrastructure and CI/CD files). Use whenever the user asks to design an architecture, analyze or review an existing codebase or system, detect architecture drift, plan a modernization or migration, assess the impact of an architectural change, compare options (monolith vs microservices, PostgreSQL vs MongoDB), write ADRs or diagrams, or turn requirements into an implementation blueprint. Also use for "analyze our repo and redesign it for multi-tenancy", "what architecture should we use", "does our code match our docs", or "how do we move to object storage". Read-only, evidence-labelled, works with no tools. Not for building a full production app or a complete security audit.
+description: Design, review, or evolve software system architecture from business requirements and real technical evidence (repository, docs, database schema, API specs, infrastructure and CI/CD files). Use whenever the user asks to design an architecture, analyze or review an existing codebase or system, detect architecture drift, plan a modernization or migration, assess the impact of an architectural change, compare options (monolith vs microservices, PostgreSQL vs MongoDB), write ADRs or diagrams, or turn requirements into an implementation blueprint. Also use for "analyze our repo and redesign it for multi-tenancy", "what architecture should we use", "does our code match our docs", or "how do we move to object storage". Read-only, evidence-labelled, works with no tools. Not for building a full production app or a complete security audit. Handles "run the chain" (stage 2 of requirements → architecture → workflow).
 ---
 
 # AI System Architect
@@ -26,11 +26,11 @@ Not for: generating a whole production application (architecture and implementat
 
 ## Workflow
 1. **Pick the mode and the smallest tool set.** Use only the sources the question needs (see `references/discovery-playbook.md`). Ask a question only if the mode or goal is genuinely ambiguous; otherwise state assumptions and proceed.
-2. **Capture requirements and drivers.** Keep the user's requirement IDs (for example FR-014) unchanged. Extract architecture drivers, constraints, quality attributes, team capability and budget signals. Business requirements drive the architecture.
+2. **Capture requirements and drivers.** Keep the user's requirement IDs (for example FR-014) unchanged. Extract architecture drivers, constraints, quality attributes, team capability and budget signals. Business requirements drive the architecture. For a new design follow `references/architecture-methodology.md` (drivers, quality attributes, scale analysis; unknown scale stays Unknown or a labelled assumption).
 3. **Discover evidence progressively** when an existing system is involved and access is authorized: root files, project type, docs, configuration, dependencies, architecture directories, entry points, domain modules, data layer, tests. Go deeper only when needed. Never read everything blindly.
 4. **Label every external observation** with an evidence type and a confidence level (`references/evidence-model.md`). A dependency listed is only "Declared" until usage is seen. A folder name alone never proves an architectural style.
 5. **Reconstruct the observed architecture** (components, layers, integrations, data, infrastructure) before proposing changes. For AI systems also follow `references/ai-architecture.md`.
-6. **Analyze or design.** Depending on mode, use `references/analysis-workflows.md` (drift, debt, modernization, migration, change impact) or generate options, compare trade-offs and select one with rationale (`references/comparison-and-validation.md`). Justify all complexity. Microservices are not the default. The result must be implementable by the intended team.
+6. **Analyze or design.** Depending on mode, use `references/analysis-workflows.md` (drift, debt, modernization, migration, change impact) or generate options, compare trade-offs and select one with rationale (`references/comparison-and-validation.md`). Choose styles with `references/architecture-patterns.md` (when each style is justified, and the anti-patterns), technologies with `references/technology-domains.md`, and cover deployment, reliability, observability and cost with `references/operations.md`. Justify all complexity. Microservices are not the default. The result must be implementable by the intended team.
 7. **Validate the result**: requirements coverage and quality-attribute fitness using the qualitative statuses Covered, Partially Covered, Not Covered, Unknown. No numeric scores.
 8. **Produce outputs**: architecture description, ADR candidates and risk register (`references/adr-and-risk.md`), diagrams (`references/diagrams.md`), developer handoff and task breakdown (`references/handoff.md`). Emit structured JSON when the user wants machine-readable output (`references/output-schema.md`) and check it with the scripts below.
 9. **Close with unknowns.** List what could not be verified, why, and how to verify it.
@@ -51,13 +51,31 @@ Tag each recommendation `REQUIRED`, `RECOMMENDED`, `OPTIONAL`, `FUTURE` or `EXPE
 - Prefer architectural clarity over document length.
 - Never invent infrastructure, technologies, versions or tool results. If a source is unavailable, report it using the failure format in `references/discovery-playbook.md` and continue with what can be verified.
 
+## Running as stage 2 of the chain
+This is the middle of three skills (`ai-requirements-analyst` → `ai-system-architect` → `ai-workflow-architect`). When the input is a requirements document from stage 1, or the user says "run the chain", read `references/chaining.md` and:
+- Read the whole requirements document first. Take drivers, constraints, assumptions and questions from it; do not re-ask what it answers.
+- Set `project.chain` (stage 2, `upstream=<requirements file>`, `next=ai-workflow-architect`) so the report starts with the `> Chain:` header.
+- Cite every upstream item: each FR, NFR, BR, AIR, IR, CON and DEP appears in `upstream_coverage` as covered, partially covered, deferred or out of scope, with a reason for the last two. Never redefine them; give your own constraint an id such as `CST-001` and cite the upstream `CON-nnn` in `cites`.
+- Keep the locked decisions from the upstream handoff. If the design would be better with one changed, say so in a decision and a question, never silently.
+- Define only this stage's IDs (`AD ADR RISK DEBT INT EVT COMP`); continue `A-` and `Q-` numbering after the upstream numbers; list integrations as `integration_architecture.interfaces` with `INT-nnn` ids; mark unknown integrations `REQUIRES VALIDATION` and name the workflow-level risk.
+- End with the `handoff` section: components, integrations and decisions the workflow stage must cover, locked decisions, blocking questions, next A and Q numbers.
+- Validate, render, then check the hand-off:
+```bash
+python3 scripts/validate_architecture.py 02-architecture.json --upstream 01-requirements.md --strict
+python3 scripts/generate_report.py 02-architecture.json -o 02-architecture.md
+python3 scripts/validate_ids.py 02-architecture.md
+python3 scripts/validate_chain.py 01-requirements.md 02-architecture.md
+```
+If the user is not there to answer, record the questions and proceed on labelled assumptions (`references/chaining.md` section 4). Worked example: `examples/chain-example/`.
+
 ## Without tools
 If no inspection tools are available, work as a design-from-requirements skill: use only user-stated and documented facts, mark everything else ASSUMED or RECOMMENDED, and list the evidence that would change the design. Shell or Python access is enough to run the scripts; MCP servers are optional and must be read-only by default.
 
 ## Scripts (Python 3, standard library only)
-- `scripts/validate_architecture.py architecture.json`: checks structure, evidence types, classifications, references, secrets. Exit 1 on errors.
+- `scripts/validate_architecture.py architecture.json [--upstream requirements.md] [--strict]`: checks structure, evidence types, classifications, references, secrets; with upstream also that cited requirements exist, Must items and locked decisions are covered, and IDs are not restated. Exit 1 on errors.
 - `scripts/validate_diagrams.py architecture.json diagram.mmd [more diagrams]`: flags diagram components missing from the architecture (error) and architecture components missing from diagrams (warning). Reads Mermaid, PlantUML, or Markdown with fenced blocks.
-- `scripts/generate_report.py architecture.json [-o report.md]`: renders the JSON as a Markdown report with secret masking.
+- `scripts/generate_report.py architecture.json [-o report.md]`: renders the JSON as a Markdown report with secret masking, ID case preserved, unknown sections kept, and the chain header and handoff block written in chain mode.
+- `scripts/validate_ids.py 02-architecture.md [--upstream 01-requirements.md]` and `scripts/validate_chain.py 01-requirements.md 02-architecture.md [03-workflow.md]`: ID grammar and hand-off checks across the chain (`scripts/idscan.py` is their shared helper).
 If code cannot be run, say so and do the same checks by hand; never claim a check ran when it did not.
 
 ## References (read when needed)
@@ -71,3 +89,8 @@ If code cannot be run, say so and do the same checks by hand; never claim a chec
 - `references/security-and-safety.md`: architecture-level security review, read-only and secrets rules.
 - `references/handoff.md`: developer handoff, task breakdown, testing strategy, final answer skeleton.
 - `references/output-schema.md`: structured JSON schema (versioned).
+- `references/architecture-methodology.md`: the design workflow, drivers, quality attributes, scale analysis (new systems).
+- `references/architecture-patterns.md`: architecture styles, when each is justified, anti-patterns.
+- `references/technology-domains.md`: per-domain selection frameworks (frontend, backend, database, API, integration, auth, security, caching, storage, background work, search).
+- `references/operations.md`: deployment, observability, reliability, backup and recovery, performance, scalability, cost modelling.
+- `references/chaining.md`: running with the requirements and workflow skills (header, handoff, ID ownership, coverage, validators).

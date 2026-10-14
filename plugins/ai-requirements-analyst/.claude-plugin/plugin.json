@@ -1,7 +1,7 @@
 {
   "name": "ai-requirements-analyst",
   "displayName": "AI Requirements Analyst",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Evidence-based requirements engineering — turns ideas, docs, and connected repos/DBs/APIs into structured, implementation-ready requirements, and verifies documented requirements against what's actually built.",
   "author": {
     "name": "Naxasware",
@@ -19,12 +19,5 @@
     "requirements-engineering",
     "evidence-based",
     "audit"
-  ],
-  "metadata": {
-    "vendor": "Naxasware",
-    "productName": "AI Requirements Analyst",
-    "productVersion": "2.0.0",
-    "category": "general"
-  },
-  "$schema": "https://json.schemastore.org/claude-code-plugin.json"
+  ]
 }
