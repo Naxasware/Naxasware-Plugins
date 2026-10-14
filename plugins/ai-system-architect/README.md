@@ -4,7 +4,7 @@
 
 > V1 designs architecture from requirements. V2 can inspect the actual system and design architecture based on evidence.
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](CHANGELOG.md)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-green)](../../LICENSE)
 
 Part of the [Naxasware-Plugins](../../README.md) marketplace.
@@ -26,6 +26,16 @@ A Claude Skill/Plugin (and a portable instruction set for other agent frameworks
 
 Full behavioral spec lives in [`skills/ai-system-architect/SKILL.md`](skills/ai-system-architect/SKILL.md) and its `references/` files — read those for the complete methodology; this README is about installing and running it.
 
+## Running the chain
+
+This plugin is stage 2 of `ai-requirements-analyst` → `ai-system-architect` → `ai-workflow-architect`. Give it `01-requirements.md` and ask for "run the chain": it writes `02-architecture.json` (schema 1.1, with `project.chain`, `upstream_coverage`, `carried_forward` and `handoff`) and renders the chain-ready `02-architecture.md`. The validator refuses an architecture that cites a requirement the upstream document never defined or leaves a Must requirement uncovered. A worked example is in `examples/chain-example/`.
+
+```bash
+python3 skills/ai-system-architect/scripts/validate_architecture.py 02-architecture.json --upstream 01-requirements.md --strict
+python3 skills/ai-system-architect/scripts/generate_report.py 02-architecture.json -o 02-architecture.md
+python3 skills/ai-system-architect/scripts/validate_chain.py 01-requirements.md 02-architecture.md
+```
+
 ## Layout
 
 ```
@@ -45,9 +55,17 @@ plugins/ai-system-architect/
 │       │   ├── ai-architecture.md          # discovering and designing AI components
 │       │   ├── security-and-safety.md      # architecture-level security review, read-only/secrets rules
 │       │   ├── handoff.md                  # developer handoff, task breakdown, testing strategy
-│       │   └── output-schema.md            # structured JSON schema (versioned)
+│       │   ├── architecture-methodology.md # design workflow: drivers, quality attributes, scale analysis
+│       │   ├── architecture-patterns.md    # architecture styles, when each is justified, anti-patterns
+│       │   ├── technology-domains.md       # per-domain selection frameworks (database, API, auth, ...)
+│       │   ├── operations.md               # deployment, observability, reliability, cost
+│       │   ├── chaining.md                 # running with the requirements and workflow plugins
+│       │   └── output-schema.md            # structured JSON schema (versioned, 1.1)
 │       └── scripts/
-│           ├── validate_architecture.py    # checks structure, evidence, classifications, secrets
+│           ├── validate_architecture.py    # structure, evidence, secrets; --upstream: requirement coverage
+│           ├── validate_ids.py             # ID grammar for the rendered architecture document
+│           ├── validate_chain.py           # hand-off checks across the three chain documents
+│           ├── idscan.py                   # shared ID scanner (identical in all three plugins)
 │           ├── validate_diagrams.py        # diagram-vs-architecture component consistency
 │           └── generate_report.py          # renders JSON → Markdown report (secrets masked)
 ├── examples/                  # sample inputs/outputs you can run scripts against

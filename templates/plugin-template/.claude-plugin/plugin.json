@@ -7,10 +7,5 @@
   "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/__PLUGIN_NAME__",
   "repository": "https://github.com/Naxasware/Naxasware-Plugins",
   "license": "Apache-2.0",
-  "keywords": __KEYWORDS_JSON__,
-  "metadata": {
-    "vendor": "Naxasware",
-    "productName": __DISPLAY_NAME_JSON__,
-    "productVersion": "__VERSION__"
-  }
+  "keywords": __KEYWORDS_JSON__
 }

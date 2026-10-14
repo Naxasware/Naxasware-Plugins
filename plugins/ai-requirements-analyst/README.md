@@ -4,7 +4,7 @@
 
 > V1 understands what you tell it. V2 can go check.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue)](CHANGELOG.md)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-green)](../../LICENSE)
 
 Part of the [Naxasware-Plugins](../../README.md) marketplace.
@@ -23,6 +23,15 @@ A Claude Skill/Plugin (and a portable instruction set for other agent frameworks
 
 Full behavioral spec lives in [`skills/ai-requirements-analyst/SKILL.md`](skills/ai-requirements-analyst/SKILL.md) and its `references/` files — read those for the complete methodology; this README is about installing and running it.
 
+## Running the chain
+
+This plugin is stage 1 of `ai-requirements-analyst` → `ai-system-architect` → `ai-workflow-architect`. Ask for "run the chain" (or save the output as `01-requirements.md`) and the document gets a chain header, an acceptance criterion for every functional requirement (`AC-<FR number>-<n>`) and a closing handoff block. A worked example is in `examples/chain-example/`. Validate with:
+
+```bash
+python3 skills/ai-requirements-analyst/scripts/validate_ids.py 01-requirements.md --strict
+python3 skills/ai-requirements-analyst/scripts/validate_chain.py 01-requirements.md 02-architecture.md 03-workflow.md
+```
+
 ## Layout
 
 ```
@@ -36,6 +45,7 @@ plugins/ai-requirements-analyst/
 │       │   ├── evidence-model.md        # evidence types, confidence, status classification
 │       │   ├── tool-architecture.md     # tool categories, permission model, tool selection
 │       │   ├── requirement-schema.md    # ID scheme, field structures, JSON export schema
+│       │   ├── chaining.md              # running with ai-system-architect and ai-workflow-architect
 │       │   ├── output-templates.md      # analysis modes, output shapes, export formats
 │       │   ├── quality-framework.md     # 7-point quality check, audit process
 │       │   └── examples.md              # two worked examples (offline + evidence-based)

@@ -48,6 +48,36 @@ def describe(sr, i):
     return cell(t)
 
 
+def explicit_trace(text):
+    """Rows of the document's own Traceability table: {WR id: {prefix: [ids]}}.
+    Used in preference to same-line links, which also pick up dependency columns
+    (a task that merely depends on another task is not an implementation of the requirement)."""
+    rows, in_sec, header = {}, False, None
+    for line in text.splitlines():
+        h = re.match(r"^#{1,6}\s+(.*)$", line)
+        if h:
+            in_sec, header = bool(re.search(r"traceab", h.group(1), re.I)), None
+            continue
+        if not in_sec or not line.strip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if not cells or re.match(r"^[-: ]+$", cells[0]):
+            continue
+        if not re.match(r"^`?WR-\d+", cells[0]):
+            header = [c.strip("` *").upper() for c in cells]
+            continue
+        if header:
+            wr = re.match(r"`?(WR-\d+)", cells[0]).group(1)
+            d = {}
+            for name, val in zip(header, cells):
+                for p in ("WD", "STEP", "TOOL", "TASK", "TEST"):
+                    if name.startswith(p):
+                        d.setdefault(p, [])
+                        d[p] += re.findall(rf"\b{p}-\d+\b", val)
+            rows[wr] = d
+    return rows
+
+
 def build(text, depth, upstream=None, chained=False):
     sr = vids.scan(text)
     errors, warnings = vw.validate(text, depth, upstream=upstream, chained=chained)
@@ -80,12 +110,17 @@ def build(text, depth, upstream=None, chained=False):
 
     graph = vw.build_graph(sr)
     wrs = sorted(i for i in sr.defs if i.startswith("WR-"))
+    explicit = explicit_trace(text)
     if wrs:
-        out += ["## Traceability (same-line links)", "", "| WR | WD | STEP | TOOL | TASK | TEST |", "|---|---|---|---|---|---|"]
+        title = "Traceability (from the document's own table)" if explicit else "Traceability (same-line links)"
+        out += [f"## {title}", "", "| WR | WD | STEP | TOOL | TASK | TEST |", "|---|---|---|---|---|---|"]
         for w in wrs:
             row = [w]
             for p in ("WD", "STEP", "TOOL", "TASK", "TEST"):
-                linked = sorted(x for x in graph.get(w, ()) if x.startswith(p + "-"))
+                if w in explicit and p in explicit[w]:
+                    linked = sorted(set(explicit[w][p]))
+                else:
+                    linked = sorted(x for x in graph.get(w, ()) if x.startswith(p + "-"))
                 row.append(", ".join(linked) or "—")
             out.append("| " + " | ".join(row) + " |")
         out.append("")

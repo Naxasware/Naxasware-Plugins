@@ -250,9 +250,14 @@ def validate(paths, texts=None):
     here = Path(__file__).resolve().parent
     for fname in ("idscan.py", "validate_chain.py"):
         mine = hashlib.sha256((here / fname).read_bytes()).hexdigest()
-        for sib in here.parent.parent.glob(f"ai-*/scripts/{fname}"):
+        # siblings: other skills in the same skills/ folder (flat layout) and, in the monorepo
+        # layout plugins/<plugin>/skills/<skill>/scripts, the same script in the other plugins
+        candidates = set(here.parent.parent.glob(f"ai-*/scripts/{fname}"))
+        candidates |= set(here.parents[3].glob(f"ai-*/skills/ai-*/scripts/{fname}")) if len(here.parents) > 3 else set()
+        for sib in sorted(candidates):
             if sib.resolve() != (here / fname).resolve() and hashlib.sha256(sib.read_bytes()).hexdigest() != mine:
-                warnings.append(f"{fname} differs from {sib.parent.parent.name}/scripts/{fname}; "
+                owner = sib.parent.parent.name
+                warnings.append(f"{fname} differs from {owner}/scripts/{fname}; "
                                 f"the three copies must be identical")
     return errors, warnings
 

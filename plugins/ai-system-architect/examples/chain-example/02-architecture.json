@@ -1,0 +1,743 @@
+{
+  "project": {
+    "name": "Supplier Invoice Intake and Approval Automation (chain example)",
+    "schema_version": "1.1",
+    "mode": "requirements_to_architecture",
+    "chain": {
+      "stage": 2,
+      "skill": "ai-system-architect",
+      "upstream": [
+        "01-requirements.md"
+      ],
+      "next": "ai-workflow-architect"
+    }
+  },
+  "business_context": {
+    "summary": "AP clerks re-key emailed supplier invoices into an ERP by hand; duplicates have been paid. Goal: read, match, route and post invoices with a person approving every payment unless the business decides otherwise (CONFLICT-001).",
+    "evidence_ids": [
+      "EV-001",
+      "EV-002"
+    ]
+  },
+  "architecture_drivers": [
+    {
+      "id": "AD-001",
+      "statement": "No payment without a recorded human approval; the AI never approves or pays (locked).",
+      "requirement_ids": [
+        "BR-001",
+        "BR-002",
+        "FR-006"
+      ]
+    },
+    {
+      "id": "AD-002",
+      "statement": "A supplier and invoice number may be posted once; the client has paid a duplicate before.",
+      "requirement_ids": [
+        "BR-003",
+        "FR-004",
+        "FR-007"
+      ]
+    },
+    {
+      "id": "AD-003",
+      "statement": "Invoice volume is unknown, so nothing may be sized or split for scale yet.",
+      "requirement_ids": [
+        "NFR-002"
+      ],
+      "label": "Unknown"
+    },
+    {
+      "id": "AD-004",
+      "statement": "ERP vendor and API capabilities are unknown; the integration must be isolated behind one adapter.",
+      "requirement_ids": [
+        "IR-002",
+        "CON-001",
+        "DEP-001"
+      ],
+      "label": "Unknown"
+    },
+    {
+      "id": "AD-005",
+      "statement": "Every state change must be reconstructable for audit.",
+      "requirement_ids": [
+        "FR-009",
+        "NFR-004",
+        "BO-003"
+      ]
+    },
+    {
+      "id": "AD-006",
+      "statement": "Invoice files and their text are untrusted input that an AI step will read.",
+      "requirement_ids": [
+        "AIR-001",
+        "NFR-001"
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "id": "CST-001",
+      "statement": "The existing ERP stays; integrate through its REST API.",
+      "cites": [
+        "CON-001"
+      ]
+    }
+  ],
+  "quality_attributes": [
+    {
+      "id": "QA-001",
+      "name": "Payment control (no unapproved payment)",
+      "status": "Covered",
+      "note": "ADR-002 enforces it at the ERP gateway, not only in the UI."
+    },
+    {
+      "id": "QA-002",
+      "name": "Security",
+      "status": "Partially Covered",
+      "note": "Design controls exist; NFR-001 has no measurable target."
+    },
+    {
+      "id": "QA-003",
+      "name": "Auditability",
+      "status": "Partially Covered",
+      "note": "ADR-005 records events; retention period UNKNOWN."
+    },
+    {
+      "id": "QA-004",
+      "name": "Speed",
+      "status": "Unknown",
+      "note": "NFR-002 target not defined; volume unknown."
+    },
+    {
+      "id": "QA-005",
+      "name": "Extraction accuracy",
+      "status": "Unknown",
+      "note": "NFR-003 target not defined; needs a labelled sample set."
+    },
+    {
+      "id": "QA-006",
+      "name": "Availability and recovery",
+      "status": "Unknown",
+      "note": "No requirement stated; not designed."
+    }
+  ],
+  "architecture_options": [
+    {
+      "id": "OPT-A",
+      "name": "Modular monolith with database-backed job queue",
+      "trade_off": "Fewest moving parts and one thing to run; scaling parts independently is harder later. Fits unknown, probably modest volume."
+    },
+    {
+      "id": "OPT-B",
+      "name": "Buy or configure an invoice-automation or RPA product",
+      "trade_off": "Fastest start if a product fits the ERP; locks the approval rules and AI behavior to the vendor; fit REQUIRES VALIDATION (vendor unknown)."
+    },
+    {
+      "id": "OPT-C",
+      "name": "Event-driven services with a message broker",
+      "trade_off": "Independent scaling and isolation; heavy for an unknown, likely small load and a team of unknown size. No requirement calls for it."
+    }
+  ],
+  "selected_architecture": {
+    "style": "Modular monolith (OPT-A)",
+    "rationale": "Requirements show no need for independent scaling (AD-003) and one hard control point (AD-001). Would change if: volume proves high, or the ERP API cannot post safely, or a product (OPT-B) covers BR-001 and FR-004 natively.",
+    "classification": "RECOMMENDED",
+    "confidence": "Medium"
+  },
+  "components": [
+    {
+      "id": "COMP-001",
+      "name": "Shared Mailbox",
+      "origin": "stated",
+      "responsibility": "Existing AP mailbox that receives supplier invoices (provider UNKNOWN).",
+      "classification": "RECOMMENDED",
+      "evidence_ids": [
+        "EV-001"
+      ]
+    },
+    {
+      "id": "COMP-002",
+      "name": "Mailbox Connector",
+      "origin": "recommended",
+      "responsibility": "Fetches new emails, stores each PDF once (FR-001); safe against repeat delivery.",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-003",
+      "name": "Invoice Registry",
+      "origin": "recommended",
+      "responsibility": "Holds invoice state machine, duplicate check (FR-004, BR-003), and the posting key.",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-004",
+      "name": "Extraction Service",
+      "origin": "recommended",
+      "responsibility": "Only AI component: turns a PDF into schema-checked fields with confidence (FR-002, AIR-001). No tools, no ERP access.",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-005",
+      "name": "Matching Service",
+      "origin": "recommended",
+      "responsibility": "Deterministic PO match and arithmetic checks (FR-003).",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-006",
+      "name": "Approval Service",
+      "origin": "recommended",
+      "responsibility": "Routes by amount (FR-005), records human decisions (FR-006), reminders and escalation (FR-010).",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-007",
+      "name": "Review UI",
+      "origin": "recommended",
+      "responsibility": "Exception queue for clerks (FR-008), approval screen showing the original PDF beside extracted values, status report (FR-011).",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-008",
+      "name": "ERP Gateway",
+      "origin": "recommended",
+      "responsibility": "Only path to the ERP; refuses to post without a recorded approval (ADR-002); idempotent posting (ADR-004).",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-009",
+      "name": "ERP System",
+      "origin": "stated",
+      "responsibility": "Existing ERP with a REST API (vendor UNKNOWN).",
+      "classification": "RECOMMENDED",
+      "evidence_ids": [
+        "EV-001"
+      ]
+    },
+    {
+      "id": "COMP-010",
+      "name": "Audit Log",
+      "origin": "recommended",
+      "responsibility": "Append-only event record (FR-009).",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-011",
+      "name": "Notification Sender",
+      "origin": "recommended",
+      "responsibility": "Email to approvers and clerks (A-003).",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-012",
+      "name": "Invoice Database",
+      "origin": "recommended",
+      "responsibility": "Relational store for invoices, approvals and queue state. Engine not chosen.",
+      "classification": "RECOMMENDED"
+    },
+    {
+      "id": "COMP-013",
+      "name": "Document Store",
+      "origin": "recommended",
+      "responsibility": "Keeps original PDFs unchanged for audit and reviewer comparison.",
+      "classification": "RECOMMENDED"
+    }
+  ],
+  "modules": [],
+  "data_architecture": {
+    "store": "Relational database for state and approvals; separate document store for original PDFs",
+    "note": "Engine, retention and region are UNKNOWN (retention: Q-008). Supplier and PO data stay in the ERP (A-005); the system keeps references, not copies."
+  },
+  "api_architecture": {
+    "inbound": "Review UI to application over authenticated HTTPS; no public API requirement exists.",
+    "outbound": "ERP REST API through COMP-008 only. Needed capabilities (read PO and receipt, create payable, detect a repeat post) REQUIRES VALIDATION (Q-004)."
+  },
+  "integration_architecture": {
+    "interfaces": [
+      {
+        "id": "INT-001",
+        "name": "Mailbox to Mailbox Connector",
+        "status": "REQUIRES VALIDATION",
+        "note": "Provider and access method UNKNOWN (IR-001)."
+      },
+      {
+        "id": "INT-002",
+        "name": "ERP Gateway to ERP System",
+        "status": "REQUIRES VALIDATION",
+        "workflow_risk": "If the ERP cannot reject a repeat post, duplicate payables depend on our own posting key alone (RISK-002)."
+      }
+    ]
+  },
+  "security_architecture": {
+    "authentication": "Staff sign in through the company identity provider (provider UNKNOWN).",
+    "authorization": "Roles AP Clerk, AP Manager, Controller. Clerk cannot approve. Whether the person who corrected data may also approve is OPTIONAL and open (Q-009).",
+    "secrets": "Mailbox and ERP credentials stored in a secret manager; no values in code or documents.",
+    "ai_boundary": "Invoice text is data, never instructions. Extraction output is accepted only if it matches a fixed schema.",
+    "files": "Scan attachments before processing (RECOMMENDED); accept PDF types only."
+  },
+  "infrastructure": {
+    "runtime": "UNKNOWN (host, cloud and team skills not provided)",
+    "note": "No sizing given because volume is unknown (Q-001)."
+  },
+  "deployment": {},
+  "observability": {
+    "approach": "Correlation id per invoice across all modules; alert on invoices stuck in a state past a limit and on ERP post failures. Alert limits NOT PROVIDED."
+  },
+  "ai_architecture": {
+    "use": "Field extraction only (AIR-001).",
+    "model_strategy": "Hosted or local model class UNKNOWN; model choice is time-sensitive and deliberately not fixed here. Supplier data handling by any hosted provider REQUIRES VALIDATION (RISK-006).",
+    "controls": "Deterministic checks after extraction (line sum equals total, date valid, currency known); low-confidence or failed checks go to the exception queue; AI has no tool, ERP or approval access.",
+    "evaluation": "Measure against a labelled sample of real invoices once Q-005 sets targets."
+  },
+  "decisions": [
+    {
+      "id": "ADR-001",
+      "title": "Build one modular monolith with a database-backed job queue",
+      "classification": "RECOMMENDED",
+      "driver": "AD-003",
+      "components": [
+        "COMP-002",
+        "COMP-003",
+        "COMP-005",
+        "COMP-006"
+      ],
+      "confidence": "Medium",
+      "options_considered": "OPT-A, OPT-B, OPT-C",
+      "consequences": "Easy to run; revisit if volume or team structure changes."
+    },
+    {
+      "id": "ADR-002",
+      "title": "Enforce human approval at the ERP Gateway, not only in the UI",
+      "classification": "REQUIRED",
+      "driver": "AD-001",
+      "components": [
+        "COMP-006",
+        "COMP-008"
+      ],
+      "confidence": "High",
+      "consequences": "A defect in the UI cannot cause an unapproved payment; the gateway checks for a stored human decision before every post."
+    },
+    {
+      "id": "ADR-003",
+      "title": "Limit AI to extraction behind a schema check, with no tools",
+      "classification": "REQUIRED",
+      "driver": "AD-006",
+      "components": [
+        "COMP-004"
+      ],
+      "confidence": "High",
+      "consequences": "Prompt injection can at worst produce wrong fields, which checks and humans catch."
+    },
+    {
+      "id": "ADR-004",
+      "title": "Post to the ERP with our own idempotency key and a prior lookup",
+      "classification": "REQUIRED",
+      "driver": "AD-002",
+      "components": [
+        "COMP-008",
+        "COMP-003"
+      ],
+      "confidence": "Medium",
+      "consequences": "Needs ERP lookup capability; REQUIRES VALIDATION (Q-004)."
+    },
+    {
+      "id": "ADR-005",
+      "title": "Record every state change in an append-only audit log",
+      "classification": "REQUIRED",
+      "driver": "AD-005",
+      "components": [
+        "COMP-010"
+      ],
+      "confidence": "High"
+    },
+    {
+      "id": "ADR-006",
+      "title": "Make the small-invoice policy a setting, default to human approval for all",
+      "classification": "RECOMMENDED",
+      "driver": "AD-001",
+      "components": [
+        "COMP-006"
+      ],
+      "confidence": "Medium",
+      "consequences": "Does not decide CONFLICT-001. The safe default follows locked BR-001 until the business answers Q-003."
+    }
+  ],
+  "risks": [
+    {
+      "id": "RISK-001",
+      "risk": "Prompt injection: text inside an invoice tries to steer the AI",
+      "evidence": "ASSUMED (typical for document-reading AI; no incident reported)",
+      "impact": "High",
+      "likelihood": "Medium",
+      "mitigation": "ADR-003: schema-only output, no tools, deterministic checks",
+      "contingency": "Quarantine the invoice and review manually",
+      "affected_component": "COMP-004"
+    },
+    {
+      "id": "RISK-002",
+      "risk": "Duplicate payable created if the ERP cannot detect a repeat post",
+      "evidence": "ASSUMED; ERP capability UNKNOWN (Q-004)",
+      "impact": "High",
+      "likelihood": "Medium",
+      "mitigation": "ADR-004 key plus lookup; reconcile daily against the ERP",
+      "contingency": "Void the duplicate in the ERP by a person",
+      "affected_component": "COMP-008"
+    },
+    {
+      "id": "RISK-003",
+      "risk": "Small invoices paid with no human if BR-004 is adopted without safeguards",
+      "evidence": "USER_STATED conflict (CONFLICT-001)",
+      "impact": "High",
+      "likelihood": "Medium",
+      "mitigation": "ADR-006 default to approval; require business owner sign-off for any exception",
+      "contingency": "Switch the setting back to approve-all",
+      "affected_component": "COMP-006"
+    },
+    {
+      "id": "RISK-004",
+      "risk": "Approvals stall and invoices age",
+      "evidence": "ASSUMED; no wait limit given (Q-006)",
+      "impact": "Medium",
+      "likelihood": "High",
+      "mitigation": "Reminders and escalation (FR-010) with limits once defined",
+      "contingency": "Manager reassigns manually",
+      "affected_component": "COMP-006"
+    },
+    {
+      "id": "RISK-005",
+      "risk": "A human approves a wrong amount that the AI misread",
+      "evidence": "INFERRED",
+      "impact": "High",
+      "likelihood": "Medium",
+      "mitigation": "Show original PDF beside extracted values; arithmetic checks",
+      "contingency": "Reverse in the ERP before payment run",
+      "affected_component": "COMP-007"
+    },
+    {
+      "id": "RISK-006",
+      "risk": "Supplier bank or contact data sent to an external AI provider",
+      "evidence": "ASSUMED; provider UNKNOWN",
+      "impact": "Medium",
+      "likelihood": "Medium",
+      "mitigation": "Decide provider and data terms before build; mask where possible",
+      "contingency": "Switch to a local model",
+      "affected_component": "COMP-004"
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "A-006",
+      "text": "One deployable unit is acceptable to the team. Reason: team size and skills not provided. Impact if wrong: structure changes."
+    },
+    {
+      "id": "A-007",
+      "text": "Original PDFs must be kept unchanged for audit. Reason: FR-009 asks for a full trail. Impact if wrong: less storage."
+    }
+  ],
+  "open_questions": [
+    {
+      "id": "Q-007",
+      "text": "Which company identity provider and hosting platform are in use?",
+      "why": "Authentication and runtime choices."
+    },
+    {
+      "id": "Q-008",
+      "text": "How long must invoices and the audit log be kept, and under which rules?",
+      "why": "Storage and deletion design."
+    },
+    {
+      "id": "Q-009",
+      "text": "May the person who corrected an invoice also approve it?",
+      "why": "Separation of duties."
+    },
+    {
+      "id": "Q-010",
+      "text": "May invoice data go to an external AI provider?",
+      "why": "Model strategy, RISK-006."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV-001",
+      "types": [
+        "USER_STATED"
+      ],
+      "confidence": "High",
+      "note": "00-client-brief.md: mailbox, ERP with REST API, approval rules"
+    },
+    {
+      "id": "EV-002",
+      "types": [
+        "DOCUMENTED"
+      ],
+      "sources": [
+        "01-requirements.md"
+      ],
+      "confidence": "High",
+      "note": "Requirements document"
+    },
+    {
+      "id": "EV-003",
+      "types": [
+        "RECOMMENDED"
+      ],
+      "confidence": "Medium",
+      "note": "Design proposals in this document"
+    }
+  ],
+  "traceability": [
+    {
+      "requirement": "FR-001",
+      "driver": "AD-002",
+      "decision": "ADR-001",
+      "component": "COMP-002"
+    },
+    {
+      "requirement": "FR-002",
+      "driver": "AD-006",
+      "decision": "ADR-003",
+      "component": "COMP-004"
+    },
+    {
+      "requirement": "FR-003",
+      "driver": "AD-002",
+      "decision": "ADR-001",
+      "component": "COMP-005"
+    },
+    {
+      "requirement": "FR-004",
+      "driver": "AD-002",
+      "decision": "ADR-004",
+      "component": "COMP-003"
+    },
+    {
+      "requirement": "FR-005",
+      "driver": "AD-001",
+      "decision": "ADR-006",
+      "component": "COMP-006"
+    },
+    {
+      "requirement": "FR-006",
+      "driver": "AD-001",
+      "decision": "ADR-002",
+      "component": "COMP-006"
+    },
+    {
+      "requirement": "FR-007",
+      "driver": "AD-002",
+      "decision": "ADR-004",
+      "component": "COMP-008"
+    },
+    {
+      "requirement": "FR-008",
+      "driver": "AD-006",
+      "decision": "ADR-003",
+      "component": "COMP-007"
+    },
+    {
+      "requirement": "FR-009",
+      "driver": "AD-005",
+      "decision": "ADR-005",
+      "component": "COMP-010"
+    },
+    {
+      "requirement": "FR-010",
+      "driver": "AD-001",
+      "decision": "ADR-006",
+      "component": "COMP-011"
+    },
+    {
+      "requirement": "FR-011",
+      "driver": "AD-005",
+      "decision": "ADR-001",
+      "component": "COMP-007"
+    },
+    {
+      "requirement": "BR-001",
+      "driver": "AD-001",
+      "decision": "ADR-002",
+      "component": "COMP-008"
+    },
+    {
+      "requirement": "BR-003",
+      "driver": "AD-002",
+      "decision": "ADR-004",
+      "component": "COMP-003"
+    },
+    {
+      "requirement": "BR-002",
+      "driver": "AD-001",
+      "decision": "ADR-006",
+      "component": "COMP-006"
+    },
+    {
+      "requirement": "IR-001",
+      "driver": "AD-003",
+      "decision": "ADR-001",
+      "component": "COMP-002"
+    },
+    {
+      "requirement": "IR-002",
+      "driver": "AD-004",
+      "decision": "ADR-004",
+      "component": "COMP-008"
+    },
+    {
+      "requirement": "DEP-001",
+      "driver": "AD-004",
+      "decision": "ADR-004",
+      "component": "COMP-008"
+    }
+  ],
+  "handoff": {
+    "next_skill": "ai-workflow-architect",
+    "must_cover": [
+      "FR-001 to FR-009",
+      "BR-001",
+      "BR-003",
+      "ADR-002",
+      "ADR-004",
+      "COMP-006",
+      "COMP-008",
+      "INT-002"
+    ],
+    "locked_decisions": [
+      "BR-001"
+    ],
+    "blocking_questions": [
+      "Q-003",
+      "Q-004"
+    ],
+    "next_a": "008",
+    "next_q": "011"
+  },
+  "carried_forward": {
+    "assumptions": "A-001, A-002, A-003, A-004, A-005 still hold; none contradicted.",
+    "questions": "Q-001, Q-002, Q-003, Q-004, Q-005, Q-006 still open; Q-003 and Q-004 are blocking for the workflow stage."
+  },
+  "upstream_coverage": [
+    {
+      "upstream": "FR-001",
+      "handled_by": "COMP-002, ADR-001",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-002",
+      "handled_by": "COMP-004, ADR-003",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-003",
+      "handled_by": "COMP-005",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-004",
+      "handled_by": "COMP-003, ADR-004",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-005",
+      "handled_by": "COMP-006, ADR-006",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-006",
+      "handled_by": "COMP-006, ADR-002",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-007",
+      "handled_by": "COMP-008, ADR-004",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-008",
+      "handled_by": "COMP-007",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-009",
+      "handled_by": "COMP-010, ADR-005",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-010",
+      "handled_by": "COMP-006, COMP-011",
+      "status": "Covered"
+    },
+    {
+      "upstream": "FR-011",
+      "handled_by": "COMP-007",
+      "status": "Covered"
+    },
+    {
+      "upstream": "NFR-001",
+      "handled_by": "security_architecture, ADR-003",
+      "status": "Covered"
+    },
+    {
+      "upstream": "NFR-002",
+      "handled_by": "none",
+      "status": "Deferred",
+      "reason": "No target defined upstream (Q-005); volume unknown (Q-001)"
+    },
+    {
+      "upstream": "NFR-003",
+      "handled_by": "COMP-004",
+      "status": "Deferred",
+      "reason": "No target defined upstream (Q-005); evaluation approach in ai_architecture"
+    },
+    {
+      "upstream": "NFR-004",
+      "handled_by": "COMP-010, ADR-005",
+      "status": "Partially covered"
+    },
+    {
+      "upstream": "BR-001",
+      "handled_by": "ADR-002, COMP-008",
+      "status": "Covered"
+    },
+    {
+      "upstream": "BR-002",
+      "handled_by": "COMP-006, ADR-006",
+      "status": "Covered"
+    },
+    {
+      "upstream": "BR-003",
+      "handled_by": "COMP-003, ADR-004",
+      "status": "Covered"
+    },
+    {
+      "upstream": "BR-004",
+      "handled_by": "ADR-006",
+      "status": "Deferred",
+      "reason": "In conflict with BR-001 (CONFLICT-001, Q-003); built as a setting, default off"
+    },
+    {
+      "upstream": "AIR-001",
+      "handled_by": "COMP-004, ADR-003",
+      "status": "Covered"
+    },
+    {
+      "upstream": "IR-001",
+      "handled_by": "COMP-002, INT-001",
+      "status": "Covered"
+    },
+    {
+      "upstream": "IR-002",
+      "handled_by": "COMP-008, INT-002",
+      "status": "Covered"
+    },
+    {
+      "upstream": "CON-001",
+      "handled_by": "CST-001",
+      "status": "Covered"
+    },
+    {
+      "upstream": "DEP-001",
+      "handled_by": "INT-001, INT-002",
+      "status": "Covered"
+    }
+  ]
+}

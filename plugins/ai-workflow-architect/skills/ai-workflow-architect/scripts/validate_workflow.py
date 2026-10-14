@@ -77,9 +77,10 @@ TAG_RE = re.compile(
     r"\[(?:STATED|DOCUMENTED|OBSERVED|INFERRED|ASSUMED|RECOMMENDED|UNKNOWN)\]|"
     r"\b(?:ESTIMATE|ESTIMATED|ASSUMED|ASSUMPTION|UNKNOWN|NOT PROVIDED|REQUIRES VALIDATION)\b|"
     r"\bA-\d{3}\b", re.I)
-MONEY_RE = re.compile(r"[$€£]\s?\d|\b\d[\d,.]*\s?(?:USD|EUR|GBP)\b|\bper (?:execution|run|month|1k|1m)\b", re.I)
+_MONEY_AMOUNT = r"[$€£]\s?\d[\d,]*(?:\.\d+)?(?:\s?[kKmMbB]\b)?|\b\d[\d,.]*\s?(?:USD|EUR|GBP)\b"
+MONEY_RE = re.compile(_MONEY_AMOUNT + r"|\bper (?:execution|run|month|1k|1m)\b", re.I)
 FIGURE_RES = [
-    (re.compile(r"[$€£]\s?\d|\b\d[\d,.]*\s?(?:USD|EUR|GBP)\b", re.I), "money"),
+    (re.compile(_MONEY_AMOUNT, re.I), "money"),
     (re.compile(r"\b\d+(?:\.\d+)?\s?%"), "percentage"),
     (re.compile(r"\b\d[\d,]*\s+(?:applications?|requests?|users?|orders?|tickets?|invoices?|messages?|emails?|documents?|records?|transactions?|candidates?|customers?)\b"
                 r"(?:\s+(?:per|a|each|/)\s+(?:second|minute|hour|day|week|month|year))?", re.I), "volume"),

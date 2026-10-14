@@ -1,139 +1,79 @@
 #!/usr/bin/env python3
 """
-Validate requirement IDs in a requirements document (markdown or plain text).
+Validate a requirements document (Markdown or plain text).
 
 Checks:
-  - Every ID follows the standard scheme (PREFIX-NNN)
-  - No duplicate IDs
-  - No gaps that look like accidental skips vs. intentional removals (reported, not failed)
-  - Every ID referenced elsewhere in the doc (e.g. in a traceability matrix or
-    a requirement's "Dependencies" / "Business rules" field) actually exists
+  - IDs follow the scheme PREFIX-NNN (AC- sub-criteria are AC-<FR number>-<n>)
+  - no ID is defined twice; every ID that is cited is defined somewhere
+  - numbering gaps (reported as warnings; fine if a requirement was removed)
+  - TESTABILITY: every functional requirement (FR-) has at least one
+    acceptance criterion named AC-<same number>-<n> (AC-007-1 verifies
+    FR-007; a matrix row that merely lists both IDs does not count); every AC
+    points at an existing FR.
+
+How an ID counts as *defined* (same grammar in all three chain skills): it is
+the first thing in a heading, list item, table row (first cell), bold line or
+plain line, outside code fences, and not under a heading containing
+"Traceab", "Coverage", "Cross-ref", "Carried forward" or "Upstream" (those
+sections only reference). A line containing `<!-- ref -->` is reference-only.
+Ranges such as "FR-001 to FR-013" reference every ID in the range.
 
 Usage:
-    python validate_ids.py <path-to-document>
+    python3 validate_ids.py 01-requirements.md [--strict]
 
-Exit code is 0 if no errors (warnings are fine), 1 if errors found.
+    --strict   treat warnings as errors (includes FRs without acceptance criteria)
+
+Exit code 1 if any error was found. Standard library only.
 """
 
 import re
 import sys
-from collections import defaultdict
+from pathlib import Path
 
-VALID_PREFIXES = {
-    "BO", "ST", "ACT", "FR", "NFR", "BR", "DR", "IR", "AIR", "AR",
-    "UC", "US", "AC", "A", "Q", "CON", "DEP",
-}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import idscan  # noqa: E402
 
-# Matches PREFIX-NNN or PREFIX-NNN-N (sub-criteria like AC-007-1)
-ID_PATTERN = re.compile(r"\b([A-Z]{1,4})-(\d{3,4})(?:-(\d+))?\b")
+STAGE = 1
 
 
-def load(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
-
-
-def find_all_ids(text):
-    """Return list of (full_match, prefix, number, sub, line_no)."""
-    results = []
-    for i, line in enumerate(text.splitlines(), start=1):
-        for m in ID_PATTERN.finditer(line):
-            prefix, number, sub = m.group(1), m.group(2), m.group(3)
-            results.append((m.group(0), prefix, number, sub, i))
-    return results
-
-
-def find_definitions(text):
-    """
-    A 'definition' is an ID appearing at the start of a line or heading
-    (e.g. '### FR-001' or 'FR-001 — Create Vehicle' or '**FR-001**'),
-    as opposed to a reference to it elsewhere.
-    """
-    defs = defaultdict(list)
-    for i, line in enumerate(text.splitlines(), start=1):
-        stripped = line.strip().lstrip("#").strip().lstrip("*").strip()
-        m = ID_PATTERN.match(stripped)
-        if m:
-            full = m.group(0)
-            defs[full].append(i)
-    return defs
-
-
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: python validate_ids.py <path-to-document>")
-        sys.exit(2)
-
-    path = sys.argv[1]
-    text = load(path)
-
-    all_ids = find_all_ids(text)
-    definitions = find_definitions(text)
-
-    errors = []
+def testability(s):
+    """Warnings for FRs without an acceptance criterion and ACs without an FR."""
     warnings = []
+    frs = sorted(i for i in s.defs if i.startswith("FR-") and i.count("-") == 1)
+    acs = sorted(i for i in s.defs if i.startswith("AC-"))
+    ac_nums = {i.split("-")[1] for i in acs}
+    for fr in frs:
+        if fr.split("-")[1] not in ac_nums:
+            warnings.append(f"{fr} (line {s.defs[fr][0]}) has no acceptance criterion; add AC-{fr.split('-')[1]}-1 "
+                            f"(Given/When/Then) or state why it cannot be tested")
+    fr_nums = {i.split("-")[1] for i in frs}
+    for ac in acs:
+        if ac.split("-")[1] not in fr_nums:
+            warnings.append(f"{ac} (line {s.defs[ac][0]}) does not match any functional requirement "
+                            f"(AC ids are AC-<FR number>-<n>)")
+    return warnings
 
-    # 1. Check prefixes are valid
-    unknown_prefixes = {p for (_, p, _, _, _) in all_ids if p not in VALID_PREFIXES}
-    if unknown_prefixes:
-        warnings.append(
-            f"IDs with prefixes not in the standard scheme (may be false positives, "
-            f"e.g. figure/table labels): {sorted(unknown_prefixes)}"
-        )
 
-    # 2. Check for duplicate definitions
-    for full_id, lines in definitions.items():
-        if len(lines) > 1:
-            errors.append(f"Duplicate definition of {full_id} on lines {lines}")
-
-    # 3. Check every reference resolves to a definition
-    referenced = defaultdict(list)
-    for (full, prefix, number, sub, line_no) in all_ids:
-        if prefix in VALID_PREFIXES:
-            referenced[full].append(line_no)
-
-    undefined = [full for full in referenced if full not in definitions]
-    if undefined:
-        for full in sorted(undefined):
-            errors.append(
-                f"{full} is referenced (lines {referenced[full]}) but never defined"
-            )
-
-    # 4. Check numeric sequence per prefix for suspicious gaps
-    by_prefix = defaultdict(set)
-    for full_id in definitions:
-        m = ID_PATTERN.match(full_id)
-        if m and m.group(1) in VALID_PREFIXES and not m.group(3):
-            by_prefix[m.group(1)].add(int(m.group(2)))
-
-    for prefix, numbers in sorted(by_prefix.items()):
-        nums = sorted(numbers)
-        gaps = [n for n in range(nums[0], nums[-1] + 1) if n not in numbers]
-        if gaps:
-            warnings.append(
-                f"{prefix}: numbering has gaps at {gaps} (fine if intentional "
-                f"— e.g. a removed requirement — otherwise check for typos)"
-            )
-
-    # Report
-    print(f"Checked {path}")
-    print(f"Found {sum(len(v) for v in definitions.values())} ID definitions "
-          f"across {len(definitions)} unique IDs.\n")
-
-    if errors:
-        print("ERRORS:")
-        for e in errors:
-            print(f"  - {e}")
-    else:
-        print("No errors.")
-
-    if warnings:
-        print("\nWARNINGS:")
-        for w in warnings:
-            print(f"  - {w}")
-
-    sys.exit(1 if errors else 0)
+def main(argv):
+    strict = "--strict" in argv
+    args = [a for a in argv if a != "--strict"]
+    if len(args) != 1 or args[0].startswith("--"):
+        print(__doc__)
+        return 2
+    path = Path(args[0])
+    if not path.exists():
+        print(f"ERROR: {path}: file not found")
+        return 1
+    s = idscan.scan(path.read_text(encoding="utf-8"))
+    errors, warnings = idscan.check_doc(s, STAGE, None, malformed_is_error=False, gaps=True)
+    warnings += testability(s)
+    for w in warnings:
+        print(f"WARNING: {path}: {w}")
+    for e in errors:
+        print(f"ERROR: {path}: {e}")
+    print(f"{path}: {len(s.defs)} ID(s) defined, {len(errors)} error(s), {len(warnings)} warning(s)")
+    return 1 if errors or (strict and warnings) else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv[1:]))
