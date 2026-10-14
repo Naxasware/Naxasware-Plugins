@@ -12,7 +12,7 @@
       "name": "ai-requirements-analyst",
       "source": "./plugins/ai-requirements-analyst",
       "description": "Evidence-based requirements engineering — turns ideas, docs, and connected repos/DBs/APIs into structured, implementation-ready requirements, and verifies documented requirements against what's actually built.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "Naxasware",
         "url": "https://github.com/Naxasware"
@@ -36,7 +36,7 @@
       "name": "ai-system-architect",
       "source": "./plugins/ai-system-architect",
       "description": "Designs, reviews and modernizes software architecture from business requirements and real technical evidence (repository, docs, database, APIs, infrastructure), with explicit trade-offs, ADRs, risks and diagrams. Read-only by default and useful without any tools.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "Naxasware",
         "url": "https://github.com/Naxasware"
@@ -59,7 +59,7 @@
       "name": "ai-workflow-architect",
       "source": "./plugins/ai-workflow-architect",
       "description": "Designs, reviews, debugs and optimizes AI and automation workflows, and inspects existing ones read-only (exports, repositories, APIs, databases, logs) with evidence tracking and drift detection. Useful with or without tools.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "Naxasware",
         "url": "https://github.com/Naxasware"
