@@ -54,6 +54,30 @@
         "evidence-based"
       ],
       "category": "general"
+    },
+    {
+      "name": "ai-workflow-architect",
+      "source": "./plugins/ai-workflow-architect",
+      "description": "Designs, reviews, debugs and optimizes AI and automation workflows, and inspects existing ones read-only (exports, repositories, APIs, databases, logs) with evidence tracking and drift detection. Useful with or without tools.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Naxasware",
+        "url": "https://github.com/Naxasware"
+      },
+      "homepage": "https://github.com/Naxasware/Naxasware-Plugins/tree/main/plugins/ai-workflow-architect",
+      "repository": "https://github.com/Naxasware/Naxasware-Plugins",
+      "license": "Apache-2.0",
+      "keywords": [
+        "workflow",
+        "automation",
+        "ai-agents",
+        "architecture",
+        "drift-detection",
+        "evidence-based",
+        "mcp",
+        "review"
+      ],
+      "category": "general"
     }
   ]
 }
